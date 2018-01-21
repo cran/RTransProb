@@ -1,6 +1,6 @@
 #' Vector of Transition Counts
 #'
-#' @description This function reshapes transition matrices of counts into a time series vector of transition counts.
+#' @description This function reshapes transition matrices of counts into a 'wide format', time series of transition counts.
 #'
 #' @usage VecOfTransData(lstCnt,ratingCat,startDate,endDate,snapshots)
 #'
@@ -30,7 +30,16 @@ VecOfTransData<-function(lstCnt,ratingCat, startDate,endDate,snapshots){
                    mCount = integer(),
                    stringsAsFactors = FALSE)
 
-  TotalDateRange <- seq.Date(as.Date(startDate), as.Date(endDate), "years")
+  
+  if (snapshots == 1){
+    snaps = "years"
+  } else if (snapshots == 4){
+    snaps = "quarters"
+  } else if (snapshots == 12){
+    snaps = "months"
+  }
+  
+  TotalDateRange <- seq.Date(as.Date(startDate), as.Date(endDate), snaps)
 
   #initialize counters
   nn <- 1
@@ -43,14 +52,14 @@ VecOfTransData<-function(lstCnt,ratingCat, startDate,endDate,snapshots){
   #now create transitions table
   for (l in 1:(length(TotalDateRange)-1)){
 
-    istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "%Y-%m-%d")))
-    iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "%Y-%m-%d")))
-    DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
+    #istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "%Y-%m-%d")))
+    #iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "%Y-%m-%d")))
+    #DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
 
-    for(i in 1:(length(DateRange)-1)){
+    #for(i in 1:(length(DateRange)-1)){
 
-      startDate  <- DateRange[i]
-      endDate    <- DateRange[i+1]
+      startDate  <- TotalDateRange[l]
+      endDate    <- TotalDateRange[l+1]
 
       getRowCOunt <- nrow(lstCnt[[k]][[nn]])
 
@@ -62,8 +71,8 @@ VecOfTransData<-function(lstCnt,ratingCat, startDate,endDate,snapshots){
       for (gcols in 1:getRowCOunt){
         for (grows in 1:getRowCOunt){
           df[r,1] <- "X"
-          df[r,2] <- paste(as.character(chron::years(DateRange[i])) ,quarters(DateRange[i]),sep=" ")
-          df[r,3] <- DateRange[i]
+          df[r,2] <- paste(as.character(chron::years(TotalDateRange[l])) ,quarters(TotalDateRange[l]),sep=" ")
+          df[r,3] <- TotalDateRange[l+1]
           df[r,4] <- paste(TCols[gcols], "-", TRows[grows], sep="")
           df[r,5] <- TCols[gcols]
           df[r,6] <- TRows[grows]
@@ -82,7 +91,7 @@ VecOfTransData<-function(lstCnt,ratingCat, startDate,endDate,snapshots){
         k <- k+1
       }
 
-    }
+    #}
 
   }
 

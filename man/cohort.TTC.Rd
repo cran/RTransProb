@@ -4,38 +4,28 @@
 \alias{cohort.TTC}
 \title{Cohort - Data Weighting and "TTC" Calculation}
 \usage{
-cohort.TTC(transCount, initCount, gYear, gHorizon, transtype)
+cohort.TTC(transCount, initCount)
 }
 \arguments{
-\item{transCount}{monthly "raw" data transitions}
+\item{transCount}{transitions counts for each time-step}
 
-\item{initCount}{monthly "raw" data counts}
-
-\item{gYear}{number of relevant years}
-
-\item{gHorizon}{number of months in the horizon}
-
-\item{transtype}{averaging method. The valid values
-\itemize{
-\item{\emph{averageDataTransAnnual}}{ - "Raw" Data Average}
-\item{\emph{averageMonthlyTransAnnual}}{ - Average of Monthly Transitions}
-\item{\emph{transAnnual}}{ - Average of Annual Transitions}
-\item{\emph{averageMonthlyTransAnnualGM}}{ - Geometric Average of Monthly Transitions}
-}}
+\item{initCount}{start vector counts for each time-step}
 }
 \value{
-One of the output options corresponding to the 'transtype'value selected as input.
+\item{SAT}{\emph{Scaled Average Transitions} - compute a TTC transition matrix by first scaling and weighting the counts (start vector counts and transition counts) then calculate the transition matrices for each time-step, and finally averaging over all available time-steps. e.g., average January matrices, then February matrices or average Q1, then Q2 ...then obtain the average of the transition matrices}
 
-\item{averageDataTransAnnual}{\emph{"Raw" Data Average} - weighted average of separately scaled transition and obligor counts.}
+\item{SAPT}{\emph{Scaled Average Periodic Transitions} - compute a TTC transition matrix by weighting the transition percentages for each time-step (calculate the transition matrices for each time-step then weigh the percentages, and finally averaging over all available time-steps. e.g., average January matrices, then February matrices or average Q1, then Q2 ...then obtain the average of the transition matrices}
 
-\item{averageMonthlyTransAnnual}{\emph{Average Monthly Transitions} - compute monthly transition matrices then average over years, e.g., average January matrices, then February matrices,...}
+\item{USAT}{\emph{Unscaled Average Transitions} - compute a TTC transition matrix by first obtaining unscaled transition matrices for each time-step then averaging over all available time-steps}
 
-\item{transAnnual}{\emph{Average Annual Transitions} - compute annual transition matrices then average over years}
+\item{ATMP}{\emph{averageTransMatByPeriod} - returns the weighted the transition percentages for each time-step (calculate the transition matrices for each time-step then weigh the percentages}
 
-\item{averageMonthlyTransAnnualGM}{\emph{Geometric Average Monthly Transitions} - similar to Average Monthly Transitions except the geometric average of the monthly transition matrices, on an element-byelement basis, is used}
+\item{ATP}{\emph{averageTransByPeriod} - returns the scaled transitions for each time-step}
+
+\item{ACP}{\emph{averageCountByPeriod} - returns the scaled start vector counts for each time-step}
 }
 \description{
-Calculate \emph{Through-the-Cycle} transition rates using raw transition counts and starting obligor counts using the \emph{cohort method}.
+Calculate \emph{Through-the-Cycle} transition matrices using the \emph{cohort method} transitions.
 }
 \details{
 Many credit risk models require a \emph{long-run average} (Through-the-Cycle) PD estimate. This has been
@@ -44,75 +34,28 @@ some form of weighting of  samples.
 
 The three methods of weighting considered for data generated via the cohort method are:
 \enumerate{
-	\item Scale the number of transitions and firm counts/years using the a single year count to preserve dynamics, then average transitions and firms counts/years separately
-	\item Estimate the single-year quantities (estimate with monthly transition matrices), then average across years
+	\item Scale the number of transitions and firm counts using the a single year count to preserve dynamics, then average transitions and firms counts separately
+	\item Estimate the single-year quantities (estimate with transition matrices for each time-step), then average across years
 	\item Average annual transition matrices
 }
-The Markov property allows for direct weighting as each year can be regarded as distinct.
+The Markov property allows for direct weighting as each time-step can be regarded as distinct(independence).
 }
 \examples{
 
 \dontrun{
-#Get a sequence of years from "2000-01-01" to "2005-01-01"
-TotalDateRange <- seq(as.Date("2000-01-01"), as.Date("2005-01-01"), "mon")
-TotalDateRange_Yr <- seq(as.Date("2000-01-01"), as.Date("2005-01-01"), "years")
 
 #Set parameters
-snapshots <- 12    #monthly transition matrices
-interval <- 1/12    #1 month transition matrices
+startDate  <- "2000-01-01"
+endDate    <- "2005-01-01"
+method       <- "cohort"   
+snapshots <- 4  
+interval <-  .25
+Example<-getPIT(data,startDate, endDate,method, snapshots, interval)
 
-#define list to hold initial counts and transition counts
-lstCnt <-rep(list(list()), length(TotalDateRange_Yr))
-lstInit <-rep(list(list()), length(TotalDateRange_Yr))
-
-#initialize counters
-nn <- 1
-k <- 1
-kk <- 1
-
-#Create transition and initial counts (start vector) used as inputs to the function
-for (l in 1:(length(TotalDateRange)-1)){
-
-  istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "\%Y-\%m-\%d")))
-  iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "\%Y-\%m-\%d")))
-  DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
-
-  for(i in 1:(length(DateRange)-1)){
-
-    sDate  <- DateRange[i]
-    eDate    <- DateRange[i+1]
-
-    Sample1<-TransitionProb(data,sDate, eDate, 'cohort', snapshots, interval)
-
-    lstCnt[[k]][[kk]] <- Sample1$sampleTotals$totalsMat
-    lstInit[[k]][[kk]]  <- Sample1$sampleTotals$totalsVec
-    #print(lstCnt)
-
-    if(kk>=snapshots){
-      kk <- 1
-      k <- k+1
-    } else {
-      kk <- kk+1
-    }
-
-  }
-
-}
-
-
-
-#average of monthly transition matrices using the monthly initial portfolio
-#counts  (start vector) and transition counts.
-
-#remove empty elements from the lists (lstCnt and lstInit)
-lstInit <- lstInit[lapply(lstInit,length)>0]
-lstCnt <- lstCnt[lapply(lstCnt,length)>0]
-
-transtype <- "AverageMonthlyTransitions"   #averaging method
-gYear <- length(lapply(lstCnt,length))     #Add Error Checking for this
-gHorizon <- snapshots                      #number of months in the horizon (default= 12)
-
-transMatTest <- cohort.TTC(lstCnt,lstInit,gYear,gHorizon,transtype)
+lstInit <- Example$lstInitVec[lapply(Example$lstInitVec,length)>0]
+lstCnt <- Example$lstCntMat[lapply(Example$lstCntMat,length)>0]
+ExampleTTC <- cohort.TTC(lstCnt,lstInit)
+ 
 }
 }
 \author{

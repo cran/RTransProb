@@ -1,28 +1,21 @@
 #' Cohort - Data Weighting and "TTC" Calculation
 #'
-#' @description Calculate \emph{Through-the-Cycle} transition rates using raw transition counts and starting obligor counts using the \emph{cohort method}.
+#' @description Calculate \emph{Through-the-Cycle} transition matrices using the \emph{cohort method} transitions.
 #'
-#' @usage cohort.TTC(transCount, initCount, gYear, gHorizon, transtype)
+#' @usage cohort.TTC(transCount, initCount)
 #'
-#' @param transCount monthly "raw" data transitions
-#' @param initCount monthly "raw" data counts
-#' @param gYear number of relevant years
-#' @param gHorizon number of months in the horizon
-#' @param transtype averaging method. The valid values
-#' \itemize{
-#' \item{\emph{averageDataTransAnnual}}{ - "Raw" Data Average}
-#' \item{\emph{averageMonthlyTransAnnual}}{ - Average of Monthly Transitions}
-#' \item{\emph{transAnnual}}{ - Average of Annual Transitions}
-#' \item{\emph{averageMonthlyTransAnnualGM}}{ - Geometric Average of Monthly Transitions}
-#'}
+#' @param transCount transitions counts for each time-step
+#' @param initCount start vector counts for each time-step
 #'
 #'
-#' @return One of the output options corresponding to the 'transtype'value selected as input.
-#' @return  \item{averageDataTransAnnual}{\emph{"Raw" Data Average} - weighted average of separately scaled transition and obligor counts.}
-#' @return  \item{averageMonthlyTransAnnual}{\emph{Average Monthly Transitions} - compute monthly transition matrices then average over years, e.g., average January matrices, then February matrices,...}
-#' @return  \item{transAnnual}{\emph{Average Annual Transitions} - compute annual transition matrices then average over years}
-#' @return  \item{averageMonthlyTransAnnualGM}{\emph{Geometric Average Monthly Transitions} - similar to Average Monthly Transitions except the geometric average of the monthly transition matrices, on an element-byelement basis, is used}
-#'
+#' @return  \item{SAT}{\emph{Scaled Average Transitions} - compute a TTC transition matrix by first scaling and weighting the counts (start vector counts and transition counts) then calculate the transition matrices for each time-step, and finally averaging over all available time-steps. e.g., average January matrices, then February matrices or average Q1, then Q2 ...then obtain the average of the transition matrices}
+#' @return  \item{SAPT}{\emph{Scaled Average Periodic Transitions} - compute a TTC transition matrix by weighting the transition percentages for each time-step (calculate the transition matrices for each time-step then weigh the percentages, and finally averaging over all available time-steps. e.g., average January matrices, then February matrices or average Q1, then Q2 ...then obtain the average of the transition matrices}
+#' @return  \item{USAT}{\emph{Unscaled Average Transitions} - compute a TTC transition matrix by first obtaining unscaled transition matrices for each time-step then averaging over all available time-steps}
+#' @return  \item{ATMP}{\emph{averageTransMatByPeriod} - returns the weighted the transition percentages for each time-step (calculate the transition matrices for each time-step then weigh the percentages}
+#' @return  \item{ATP}{\emph{averageTransByPeriod} - returns the scaled transitions for each time-step}
+#' @return  \item{ACP}{\emph{averageCountByPeriod} - returns the scaled start vector counts for each time-step}
+#' 
+#' 
 #' @export
 #'
 #' @author  Abdoulaye (Ab) N'Diaye
@@ -35,104 +28,60 @@
 #'
 #' The three methods of weighting considered for data generated via the cohort method are:
 #' \enumerate{
-#' 	\item Scale the number of transitions and firm counts/years using the a single year count to preserve dynamics, then average transitions and firms counts/years separately
-#' 	\item Estimate the single-year quantities (estimate with monthly transition matrices), then average across years
+#' 	\item Scale the number of transitions and firm counts using the a single year count to preserve dynamics, then average transitions and firms counts separately
+#' 	\item Estimate the single-year quantities (estimate with transition matrices for each time-step), then average across years
 #' 	\item Average annual transition matrices
 #' }
-#' The Markov property allows for direct weighting as each year can be regarded as distinct.
+#' The Markov property allows for direct weighting as each time-step can be regarded as distinct(independence).
 #'
 #' @examples
 #'
 #' \dontrun{
-#' #Get a sequence of years from "2000-01-01" to "2005-01-01"
-#' TotalDateRange <- seq(as.Date("2000-01-01"), as.Date("2005-01-01"), "mon")
-#' TotalDateRange_Yr <- seq(as.Date("2000-01-01"), as.Date("2005-01-01"), "years")
-#'
+#' 
 #' #Set parameters
-#' snapshots <- 12    #monthly transition matrices
-#' interval <- 1/12    #1 month transition matrices
-#'
-#' #define list to hold initial counts and transition counts
-#' lstCnt <-rep(list(list()), length(TotalDateRange_Yr))
-#' lstInit <-rep(list(list()), length(TotalDateRange_Yr))
-#'
-#' #initialize counters
-#' nn <- 1
-#' k <- 1
-#' kk <- 1
-#'
-#' #Create transition and initial counts (start vector) used as inputs to the function
-#' for (l in 1:(length(TotalDateRange)-1)){
-#'
-#'   istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "%Y-%m-%d")))
-#'   iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "%Y-%m-%d")))
-#'   DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
-#'
-#'   for(i in 1:(length(DateRange)-1)){
-#'
-#'     sDate  <- DateRange[i]
-#'     eDate    <- DateRange[i+1]
-#'
-#'     Sample1<-TransitionProb(data,sDate, eDate, 'cohort', snapshots, interval)
-#'
-#'     lstCnt[[k]][[kk]] <- Sample1$sampleTotals$totalsMat
-#'     lstInit[[k]][[kk]]  <- Sample1$sampleTotals$totalsVec
-#'     #print(lstCnt)
-#'
-#'     if(kk>=snapshots){
-#'       kk <- 1
-#'       k <- k+1
-#'     } else {
-#'       kk <- kk+1
-#'     }
-#'
-#'   }
-#'
-#' }
-#'
-#'
-#'
-#' #average of monthly transition matrices using the monthly initial portfolio
-#' #counts  (start vector) and transition counts.
-#'
-#' #remove empty elements from the lists (lstCnt and lstInit)
-#' lstInit <- lstInit[lapply(lstInit,length)>0]
-#' lstCnt <- lstCnt[lapply(lstCnt,length)>0]
-#'
-#' transtype <- "AverageMonthlyTransitions"   #averaging method
-#' gYear <- length(lapply(lstCnt,length))     #Add Error Checking for this
-#' gHorizon <- snapshots                      #number of months in the horizon (default= 12)
-#'
-#' transMatTest <- cohort.TTC(lstCnt,lstInit,gYear,gHorizon,transtype)
+#' startDate  <- "2000-01-01"
+#' endDate    <- "2005-01-01"
+#' method       <- "cohort"   
+#' snapshots <- 4  
+#' interval <-  .25
+#' Example<-getPIT(data,startDate, endDate,method, snapshots, interval)
+#' 
+#' lstInit <- Example$lstInitVec[lapply(Example$lstInitVec,length)>0]
+#' lstCnt <- Example$lstCntMat[lapply(Example$lstCntMat,length)>0]
+#' ExampleTTC <- cohort.TTC(lstCnt,lstInit)
+#'  
 #' }
 
-cohort.TTC <- function(transCount, initCount, gYear, gHorizon, transtype){
+cohort.TTC <- function(transCount, initCount){
 
-
-  if(length(transCount[[1]])!=12){
-    stop("Error: when calculating cohort through-the-cycle transition rates,'transCount' must contain 12 monthly transition count matrices for each year")
+  snapshots <-  gHorizon <- length(transCount[[1]])
+  gYear <- length(lapply(transCount,length))
+  
+  validCount <- c(1,4,12)
+  if(!isTRUE(length(transCount[[1]]) %in% validCount)){
+    stop("Error: when calculating cohort through-the-cycle transition rates,'transCount' must contain transition count matrices for each time-step of the estimation window.")
   }
 
-  validMethod <- c("AverageMonthlyTransitionsAnnual", "GeometricAverageMonthlyTransitionsAnnual","RawDataAverageAnnual","AverageAnnualTransitions","AverageMonthlyTransitions","AverageMonthlyTransitionsGM")
-  if (!isTRUE(transtype %in% validMethod)){
-    stop("Error: Invalid Averaging Method. Valid averaging methods are listed in the documentation")
-  }
+  # validMethod <- c("APTA", "GAPTA","RDAA","AAT")
+  # if (!isTRUE(transtype %in% validMethod)){
+  #   stop("Error: Invalid Averaging Method. Valid averaging methods are listed in the documentation")
+  # }
 
 
   if (gYear < 1){
-    stop("Error: Invalid number of years. Number of years must be greater than 0")
+    stop("Error: Invalid number of years. Time-step must be greater than 0")
   }
 
 
-  validHorizon <- c(1,2,3,4,6,12)
-  if (!isTRUE(gHorizon %in% validHorizon)){
-    stop("Error: Invalid horizon. Valid horizon numbers are 6 or 12")
-  }
+  # validHorizon <- c(1,2,3,4,6,12)
+  # if (!isTRUE(snapshots %in% validHorizon)){
+  #   stop("Error: Invalid horizon. Valid horizon numbers are 6 or 12")
+  # }
 
 
-  #Check the lists to see if the count matrix and initial counts (start vector) are valid
+  #Check the lists to see if the transition count matrix and start vector counts are valid
   for (k in 1:length(transCount)){
-    for(n in 1:length(transCount[[1]])){
+    for(n in 1:length(transCount[[k]])){
 
       cm.matrix.counts(transCount[[k]][[n]])
       cm.vector.counts(initCount[[k]][[n]])
@@ -156,138 +105,140 @@ cohort.TTC <- function(transCount, initCount, gYear, gHorizon, transtype){
 
 
   averageTrans<- list()
-  averageMonthlyTrans <-list()
-  averageMonthlyTransGM <-list()
+  averagePeriodicTrans <-list()
+  averagePeriodicTransGM <-list()
   averageCount <- list()
   glst_initCount <-list()
-  glst_monthCount<-c()
-  lst_mMonth <- list()
-  lst_mMonth_cnt<- list()
+  glst_periodCount<-c()
+  lst_mPeriod <- list()
+  lst_mPeriod_cnt<- list()
   lst_averageTrans<- list()
   lst_initCount <- list()
   lst_averageCount <- list()
-  mMonth <- list()
-  mMonth_cnt<- list()
+  mPeriod <- list()
+  mPeriod_cnt<- list()
   mAnnual <- list()
-  monthCount<-c()
+  periodCount<-c()
   transAnnualMat <- list()
   scaler <- c()
 
 
   #Year Weights
-  transWeight <- pracma::repmat(1/length(gYear),length(gYear),1)
+  transWeight <- pracma::repmat(1/gYear,gYear,1)
 
 
-  # Monthly counts by year (monthCount)
-  # Create nState x nState matrix with rows having state counts for that month/year combination (initCount)
-  #******Basically get the total counts for each month
-  for (jj in 1:length(gYear)){
+  # Counts per time-step (periodCount)
+  # Create nState x nState matrix with rows having state counts for that period/year combination (initCount)
+  #******Basically get the total counts for each period
+  for (jj in 1:gYear){
 
-    for (ii in 1:gHorizon){
+    for (ii in 1:length(transCount[[jj]])){
       initCount[[jj]][[ii]] <- pracma::repmat(matrix(initCount[[jj]][[ii]]),1,nStates)
-      monthCount[[ii]]      <- sum(initCount[[jj]][[ii]][,1])
+      periodCount[[ii]]      <- sum(initCount[[jj]][[ii]][,1])
       gc()
     }
 
-    glst_monthCount[[jj]] <- monthCount
+    glst_periodCount[[jj]] <- periodCount
 
   }
 
-  # *****get the maximum 'total monthly count'
-  # Monthly scalar based on maximun number of observations in given month
-  for (i in 1:gHorizon){
+  # *****get the maximum 'total count per time-step'
+  # Scalar based on maximun number of observations during given time-step
+  for (i in 1:snapshots){
 
-    t <- matrix(unlist(glst_monthCount),gHorizon)
-    scaler[i] <- max(t[i,])
-
+    scales <- matrix(unlist(glst_periodCount),snapshots)
+    scaler[i] <- max(scales[i,])
 
   }
 
 
-  # Monthly "raw" data average monthly transitions and counts and average monthly transition matrices
-  for (m in 1:gHorizon){
-    for (y in 1:length(gYear)){
 
+  for (m in 1:snapshots){
+    for (y in 1:gYear){
+       
+      if(m <= length(transCount[[y]])){
       #Section 1
-      # Calculate average initial (start vector) and transition counts using monthly scalar ("raw" data method)
+      # Scale the counts (start vector counts and transition counts) then calculate transition matrices for each time-step
+      # Calculate average initial (start vector) and transition counts using the scalar for each time-step ("raw" data method)
       if (y==1){
         #Section 1.a
         # (scale the weights of the transition counts)
-        averageTrans[[m]]<- transWeight[y]*scaler[m]/glst_monthCount[[y]][[m]]*(transCount[[y]][[m]])
+        averageTrans[[m]]<- transWeight[y]*scaler[m]/glst_periodCount[[y]][[m]]*(transCount[[y]][[m]])
         #Section 1.b
         # (scale the weights of the Initial counts (start vector) )
-        averageCount[[m]] <- transWeight[y]*scaler[m]/glst_monthCount[[y]][[m]]*(initCount[[y]][[m]])
+        averageCount[[m]] <- transWeight[y]*scaler[m]/glst_periodCount[[y]][[m]]*(initCount[[y]][[m]])
 
       }else{
         #Section 1.a
         # (scale the weights of the transition counts and compound the scaled transition counts)
-        averageTrans[[m]]<- averageTrans[[m]] + transWeight[y]*scaler[m]/glst_monthCount[[y]][[m]]*(transCount[[y]][[m]])
+        averageTrans[[m]]<- averageTrans[[m]] + transWeight[y]*scaler[m]/glst_periodCount[[y]][[m]]*(transCount[[y]][[m]])
         #Section 1.b
         # (scale the weights of the initial counts (start vector) and compound the scaled initial counts (start vector) )
-        averageCount[[m]] <- averageCount[[m]] + transWeight[y]*scaler[m]/glst_monthCount[[y]][[m]]*(initCount[[y]][[m]])
+        averageCount[[m]] <- averageCount[[m]] + transWeight[y]*scaler[m]/glst_periodCount[[y]][[m]]*(initCount[[y]][[m]])
       }
 
       #Section 2
-      # Calculate monthly transition matrices using the averaged raw data
+      # Scale the transition percentages (calculate the transition matrices for each time-step then scale the percentages) 
+      # Calculate transition matrices for each time-step using the averaged raw data
       if (y==1){
         #Section 2.a
         # (equally weight the each transition probability )
-        averageMonthlyTrans[[m]]<- transWeight[y]*(transCount[[y]][[m]])/(initCount[[y]][[m]])
+        averagePeriodicTrans[[m]]<- transWeight[y]*(transCount[[y]][[m]])/(initCount[[y]][[m]])
         #Section 2.b
         # (use the scaled and weighted initial counts (start vector)  in section 1.b to calculate transition probability)
-        averageMonthlyTransGM[[m]] <- ((transCount[[y]][[m]])/(initCount[[y]][[m]]))^(1/length(gYear))
+        averagePeriodicTransGM[[m]] <- ((transCount[[y]][[m]])/(initCount[[y]][[m]]))^(1/gYear)
 
       }else{
         #Section 2.a
         # (equally weight the each transition probability )
-        averageMonthlyTrans[[m]]<- averageMonthlyTrans[[m]] + transWeight[y]*(transCount[[y]][[m]])/(initCount[[y]][[m]])
+        averagePeriodicTrans[[m]]<- averagePeriodicTrans[[m]] + transWeight[y]*(transCount[[y]][[m]])/(initCount[[y]][[m]])
         #Section 2.b
         # (use the scaled and weighted initial counts (start vector) in section 1.b to calculate transition probability)
-        averageMonthlyTransGM[[m]] <- averageMonthlyTransGM[[m]] * ((transCount[[y]][[m]])/(initCount[[y]][[m]]))^(1/length(gYear))
+        averagePeriodicTransGM[[m]] <- averagePeriodicTransGM[[m]] * ((transCount[[y]][[m]])/(initCount[[y]][[m]]))^(1/gYear)
       }
 
-
+     }
     }
 
-    #Section 2.b.1
+    #Section 2.b.1 (returns the average transition matrices (%)  for each time-step i.e, average per month, average per quarter or average per year)
     # ----------Scale geometric average transition matrix to have row sum equal to 1-----------------
     # (correct the geometric average transition matrix to make sure the row sums equal to 1)
-    averageMonthlyTransGM[[m]] <- averageMonthlyTransGM[[m]]/pracma::repmat(matrix(rowSums(averageMonthlyTransGM[[m]],2)),1,nStates)
+    averagePeriodicTransGM[[m]] <- averagePeriodicTransGM[[m]]/pracma::repmat(matrix(rowSums(averagePeriodicTransGM[[m]],2)),1,nStates)
 
 
 
     #Section 3
-    # Annual transition matrices for the two monthly methods
-    # averageMonthlyTransAnnual = Averaged monthly transition matrices
-    # averageDataTransAnnual = Monthly transition matrices using averaged data (raw method)
+    # Annual transition matrices for the two methods
+    # averagePeriodicTransAnnual = Averaged periodic transition matrices
+    # averageDataTransAnnual = Periodic transition matrices using averaged data (raw method)
     if (m==1){
       #Section 3.a
-      #Store the FIRST average monthly transition matrices in the variable 'averageMonthlyTransAnnual'
-      averageMonthlyTransAnnual   <- averageMonthlyTrans[[m]]
+      #Store the FIRST average transition matrices for each time-step in the variable 'averagePeriodicTransAnnual'
+      averagePeriodicTransAnnual   <- averagePeriodicTrans[[m]]
 
       #Section 3.b
-      #Store the FIRST average monthly transition matrices in the variable 'averageMonthlyTransAnnualGM'
-      averageMonthlyTransAnnualGM <- averageMonthlyTransGM[[m]]
+      #Store the FIRST average transition matrices for each time-step in the variable 'averagePeriodicTransAnnualGM'
+      averagePeriodicTransAnnualGM <- averagePeriodicTransGM[[m]]
 
       #Section 3.c
-      #Calculate the FIRST monthly transition matrices
+      #Calculate the FIRST transition matrices for each time-step 
       averageDataTransAnnual      <- averageTrans[[m]]/averageCount[[m]]
 
     } else {
 
+
+      #Section 3.a
+      #Store the FIRST average transition matrices for each time-step in the variable 'averagePeriodicTransAnnual'
+      averagePeriodicTransAnnual   <- averagePeriodicTransAnnual %*% averagePeriodicTrans[[m]]
+
+      #Section 3.b
+      #Store the FIRST average transition matrices for each time-step in the variable 'averagePeriodicTransAnnualGM'
+      averagePeriodicTransAnnualGM <- averagePeriodicTransAnnualGM %*% averagePeriodicTransGM[[m]]
+
+
       #-------------------------------------Fixing the square matrix---------------------------------------
       dn      <- (averageTrans[[m]]/averageCount[[m]])
       #----------------------------------------------------------------------------------------------------
-
-      #Section 3.a
-      #Store the FIRST average monthly transition matrices in the variable 'averageMonthlyTransAnnual'
-      averageMonthlyTransAnnual   <- averageMonthlyTransAnnual %*% averageMonthlyTrans[[m]]
-
-      #Section 3.b
-      #Store the FIRST average monthly transition matrices in the variable 'averageMonthlyTransAnnualGM'
-      averageMonthlyTransAnnualGM <- averageMonthlyTransAnnualGM %*% averageMonthlyTransGM[[m]]
-
-
       averageDataTransAnnual      <- averageDataTransAnnual %*% dn
 
     }
@@ -297,10 +248,10 @@ cohort.TTC <- function(transCount, initCount, gYear, gHorizon, transtype){
 
 
   #average of annual transition matrices
-  for (y in 1:length(gYear)){
+  for (y in 1:gYear){
 
     #Annual transition matrices
-    for (m in 1:gHorizon){
+    for (m in 1:length(transCount[[y]])){
 
       if (m ==1){
 
@@ -330,19 +281,17 @@ cohort.TTC <- function(transCount, initCount, gYear, gHorizon, transtype){
   }
 
 
-  if (transtype=="AverageMonthlyTransitionsAnnual"){
-    return(averageMonthlyTransAnnual)
-  }  else if (transtype=="GeometricAverageMonthlyTransitionsAnnual"){
-    return(averageMonthlyTransAnnualGM)
-  }  else if (transtype=="RawDataAverageAnnual"){
-    return(averageDataTransAnnual)
-  }  else if (transtype=="AverageAnnualTransitions"){
-    return (transAnnual)
-  }  else if (transtype=="AverageMonthlyTransitions"){
-    return (averageMonthlyTrans)
-  }  else if (transtype=="AverageMonthlyTransitionsGM"){
-    return (averageMonthlyTransGM)
-  }
+
+    outPut  <- list(SAT=averageDataTransAnnual,
+                    SAPT=averagePeriodicTransAnnual,
+                    USAT=transAnnual,
+                    ATMP=averagePeriodicTrans,
+                    ATP = averageTrans,
+                    ACP = averageCount
+                    )
+    
+    return(outPut)
+
 
 
 }

@@ -15,7 +15,7 @@ expandTransData(transData, wgtname)
 The output a dataframe of transition data in 'wide' format.
 }
 \description{
-This function reshapes time series vector of transition counts into a 'Wide' Data Format. Each non-Zero weighted row is
+This function reshapes time series vector of transition counts with elements of both 'wide' and 'long' data Formats. Each non-Zero weighted row is
  expanded to show one row per record.
 }
 \author{

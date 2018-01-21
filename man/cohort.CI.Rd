@@ -4,24 +4,20 @@
 \alias{cohort.CI}
 \title{Bootstrapped confidence intervals - Cohort}
 \usage{
-cohort.CI(transMatrix,initCount,nMonths,nStates,sim)
+cohort.CI(transMatrix,initCount,sim)
 }
 \arguments{
-\item{transMatrix}{list of 12 average monthly credit transitions.}
+\item{transMatrix}{list containing average transitions matrices for each time-step.}
 
-\item{initCount}{list of 12 average monthly initial counts (start vector).}
+\item{initCount}{list containing average start vector counts for each time-step.}
 
-\item{nMonths}{number of months in the horizon}
-
-\item{nStates}{number of rating categories.}
-
-\item{sim}{number of simulations}
+\item{sim}{number of simulations.}
 }
 \value{
 Returns the default probabilites values for the \emph{n} ratings at the 2.5, 5, 25, 50, 75, 95, 97.5 percentiles.
 }
 \description{
-estimate confidence intervals for the transition probabilities using a bootstrapping procedure for cohort method.
+estimate confidence intervals for the TTC transition probabilities using a bootstrapping procedure for cohort method.
 }
 \details{
 The general idea of bootstrapping is to use resampling methods to estimate features of the sampling distribution of
@@ -50,12 +46,46 @@ for calculation of confidence intervals
 }
 \examples{
 
-sim <- 1000                                 #number of simulation
-nMonths <- 12                               #number of month in horizon (default=12)
-nStates <- 8                                #number of ratings categories
-initCount <- c(5,10,15,20,20,20,15,5)       #start vector (vector of initial counts)
 \dontrun{
-tolerance <-cohort.CI(transMat,initCount,nMonths,nStates,sim)
+
+#Set parameters to generate PIT transition matrices
+startDate  <- "2000-01-01"
+endDate    <- "2005-01-01"
+method       <- "cohort"   
+snapshots <- 4  
+interval <-  .25 
+Example<-getPIT(data,startDate, endDate,method, snapshots, interval)
+
+lstInit <- Example$lstInitVec[lapply(Example$lstInitVec,length)>0]
+lstCnt <- Example$lstCntMat[lapply(Example$lstCntMat,length)>0]
+ExampleTTC <- cohort.TTC(lstCnt,lstInit)
+
+#use $ATMP from the cohort.TTC() as the input into the cohort.CI() function
+transMatrix    <- ExampleTTC$ATMP
+initCount      <- ExampleTTC$ACP[[1]][,1]
+sim            <- 1000
+tolerance_Cohort <-cohort.CI(transMatrix,initCount,sim)
+
+
+
+Example 2:
+#Set parameters to generate PIT transition matrices
+startDate  <- "1997-01-01"
+endDate    <- "2002-01-01"
+method       <- "cohort"   
+snapshots <- 12  
+interval <-  1 
+Example<-getPIT(data,startDate, endDate,method, snapshots, interval)
+
+lstInit <- Example$lstInitVec[lapply(Example$lstInitVec,length)>0]
+lstCnt <- Example$lstCntMat[lapply(Example$lstCntMat,length)>0]
+ExampleTTC <- cohort.TTC(lstCnt,lstInit)
+
+#use $ATMP from the cohort.TTC() as the input into the cohort.CI() function
+transMatrix    <- ExampleTTC$ATMP
+initCount      <- ExampleTTC$ACP[[1]][,1]
+sim            <- 1000
+tolerance_Cohort <-cohort.CI(transMatrix,initCount,sim)
 }
 }
 \references{

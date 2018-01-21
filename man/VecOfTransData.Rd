@@ -23,7 +23,7 @@ For example, 1 = one snapshot per year}
 The output is a time series vector of transition counts .
 }
 \description{
-This function reshapes transition matrices of counts into a time series vector of transition counts.
+This function reshapes transition matrices of counts into a 'wide format', time series of transition counts.
 }
 \author{
 Abdoulaye (Ab) N'Diaye

@@ -1,15 +1,13 @@
 
 #' Bootstrapped confidence intervals - Cohort
 #'
-#' @description estimate confidence intervals for the transition probabilities using a bootstrapping procedure for cohort method.
+#' @description estimate confidence intervals for the TTC transition probabilities using a bootstrapping procedure for cohort method.
 #'
-#' @usage cohort.CI(transMatrix,initCount,nMonths,nStates,sim)
+#' @usage cohort.CI(transMatrix,initCount,sim)
 #'
-#' @param transMatrix list of 12 average monthly credit transitions.
-#' @param initCount list of 12 average monthly initial counts (start vector).
-#' @param nMonths number of months in the horizon
-#' @param nStates number of rating categories.
-#' @param sim number of simulations
+#' @param transMatrix list containing average transitions matrices for each time-step. 
+#' @param initCount list containing average start vector counts for each time-step. 
+#' @param sim number of simulations.
 #'
 #'
 #' @details
@@ -55,42 +53,72 @@
 #'
 #' @examples
 #'
-#' sim <- 1000                                 #number of simulation
-#' nMonths <- 12                               #number of month in horizon (default=12)
-#' nStates <- 8                                #number of ratings categories
-#' initCount <- c(5,10,15,20,20,20,15,5)       #start vector (vector of initial counts)
 #' \dontrun{
-#' tolerance <-cohort.CI(transMat,initCount,nMonths,nStates,sim)
+#' 
+#' #Set parameters to generate PIT transition matrices
+#' startDate  <- "2000-01-01"
+#' endDate    <- "2005-01-01"
+#' method       <- "cohort"   
+#' snapshots <- 4  
+#' interval <-  .25 
+#' Example<-getPIT(data,startDate, endDate,method, snapshots, interval)
+#' 
+#' lstInit <- Example$lstInitVec[lapply(Example$lstInitVec,length)>0]
+#' lstCnt <- Example$lstCntMat[lapply(Example$lstCntMat,length)>0]
+#' ExampleTTC <- cohort.TTC(lstCnt,lstInit)
+#' 
+#' #use $ATMP from the cohort.TTC() as the input into the cohort.CI() function
+#' transMatrix    <- ExampleTTC$ATMP
+#' initCount      <- ExampleTTC$ACP[[1]][,1]
+#' sim            <- 1000
+#' tolerance_Cohort <-cohort.CI(transMatrix,initCount,sim)
+#' 
+#' 
+#' 
+#' Example 2:
+#' #Set parameters to generate PIT transition matrices
+#' startDate  <- "1997-01-01"
+#' endDate    <- "2002-01-01"
+#' method       <- "cohort"   
+#' snapshots <- 12  
+#' interval <-  1 
+#' Example<-getPIT(data,startDate, endDate,method, snapshots, interval)
+#' 
+#' lstInit <- Example$lstInitVec[lapply(Example$lstInitVec,length)>0]
+#' lstCnt <- Example$lstCntMat[lapply(Example$lstCntMat,length)>0]
+#' ExampleTTC <- cohort.TTC(lstCnt,lstInit)
+#' 
+#' #use $ATMP from the cohort.TTC() as the input into the cohort.CI() function
+#' transMatrix    <- ExampleTTC$ATMP
+#' initCount      <- ExampleTTC$ACP[[1]][,1]
+#' sim            <- 1000
+#' tolerance_Cohort <-cohort.CI(transMatrix,initCount,sim)
 #' }
 
-cohort.CI <- function(transMatrix,initCount,nMonths,nStates,sim){
+cohort.CI <- function(transMatrix,initCount,sim){
 
-  validMonths <- c(6,12)
-  if (!isTRUE(nMonths %in% validMonths)){
-    stop("Error: Invalid Months. Valid month numbers are 6 or 12")
+  nPeriods <- length(transMatrix)
+  
+  validMonths <- c(1,4,6,12)
+  if (!isTRUE(nPeriods %in% validMonths)){
+    stop("Error: Invalid Months. Valid month numbers are 1, 4, 6 or 12.")
   }
 
 
-  if (nStates < 2 || nStates > 25){
-    stop("Error: Invalid Number of 'Risk States'. Valid 'Number of Risk States' are between 2 and 25")
-  }
-
-
-
-  #Check the lists to see if the count matrix and initial counts (start vector) are valid
+  #Check the lists to see if the count matrix and start vector counts are valid
   for (k in 1:length(transMatrix)){
 
-    cm.matrix(as.matrix(as.data.frame(transMatrix[k])))
+    cm.matrix(as.matrix(as.data.frame(transMatrix[[k]])))
   }
 
 
   if (!is.numeric(initCount)){
-    stop("Error: The initial counts vector (start vector) is not numeric")
+    stop("Error: The start vector counts vector is not numeric")
   }
 
 
   if(0 %in% initCount){
-    stop("Error: There is at least 1 zero in the initial counts vector (start vector)")
+    stop("Error: There is at least 1 zero in the start vector")
   }
 
 
@@ -104,8 +132,14 @@ cohort.CI <- function(transMatrix,initCount,nMonths,nStates,sim){
     stop("Error: Transition matrix rows and columns must be equal")
   }
 
+  
+  if (nStates < 2 || nStates > 25){
+    stop("Error: Invalid Number of 'Risk States'. Valid 'Number of Risk States' are between 2 and 25")
+  }
+  
+  
   # Initialize output matrices
-  resmat <-replicate(nMonths, matrix(0,nStates,nStates), simplify=F)
+  resmat <-replicate(nPeriods, matrix(0,nStates,nStates), simplify=F)
   results <- matrix(0,sim,nStates)
   initCount = 9*initCount;
 
@@ -170,7 +204,7 @@ cohort.CI <- function(transMatrix,initCount,nMonths,nStates,sim){
 
   # Calculate annual transition matrix
   testDiscrete <- diag(1,m)
-  for (i in 1:nMonths){
+  for (i in 1:nPeriods){
 
     testDiscrete <- testDiscrete * matrix(transMatrix[[i]],m)
 

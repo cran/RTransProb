@@ -1,6 +1,6 @@
 #' Reshape Data to 'Wide' Data Format
 #'
-#' @description This function reshapes time series vector of transition counts into a 'Wide' Data Format. Each non-Zero weighted row is
+#' @description This function reshapes time series vector of transition counts with elements of both 'wide' and 'long' data Formats. Each non-Zero weighted row is
 #'  expanded to show one row per record.
 #'
 #' @usage expandTransData(transData, wgtname)
@@ -15,7 +15,7 @@
 #'
 #' @author  Abdoulaye (Ab) N'Diaye
 #'
-expandTransData <- function(transData, wgtname) {
+expandTransData <- function(transData, wgtname="mCount") {
 
 
   transData <- transData[ which(transData[[wgtname]] >0), ]
@@ -28,33 +28,17 @@ expandTransData <- function(transData, wgtname) {
   transData_nm <- names(df)
   transData_nm_cnt <- length(transData_nm)
 
-  r <- 1
+  industryName = transData[["industryName"]]     
+  Qtr_Year = transData[["Qtr_Year"]]         
+  endDate = transData[["endDate"]]          
+  Rating_Trans = transData[["Rating_Trans"]]     
+  start_Rating = transData[["start_Rating"]]     
+  end_rating = transData[["end_rating"]]       
+  mCount = transData[["mCount"]]           
+  Id = transData[["Id"]]    
 
-
-  for (i in 1:nrow(transData)){
-
-    wght <- transData[[wgtname]][i]
-
-    for (c in 1:wght){
-      for (columnCount in 1:transData_nm_cnt){
-        if(columnCount <= (transData_nm_cnt-2)){
-
-          df[r,columnCount] <- transData[[transData_nm[columnCount]]][i]
-
-        } else if(columnCount == (transData_nm_cnt-1)) {
-
-          df[r,columnCount] <- wght
-
-        } else {
-
-          df[r,columnCount] <- c
-
-        }
-      }
-      r <- r+1
-    }
-
-  }
+  totalCountExpanded <- sum(mCount)
+  df = getExpandTransData(industryName,Qtr_Year,endDate,Rating_Trans,start_Rating,end_rating,mCount, wgtname,  transData_nm_cnt, totalCountExpanded) 
 
   return (df)
 }

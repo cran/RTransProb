@@ -2,9 +2,11 @@
 #'
 #' @description This model implements the One-Parameter Representation method developed by Forest, Belkin and Suchower.
 #'
-#' @usage transForecast(genMat, creditIndex)
+#' @usage transForecast(genMat, isGenerator, creditIndex)
 #'
 #' @param genMat Generator Matrix
+#' @param isGenerator a variable to determine if the input matrix is a generator matrix or a proper transition matrix. 
+#' The default value is 'No'.
 #' @param creditIndex a credit index.  The model relies on the assumption that credit migration matrices are driven by
 #' a single parameter Z, which depicts the average financial health of corporate institutions (credit index). The degree
 #' of 'shift' corresponds to a simple change in the transition probabilities from an average average matrix.
@@ -48,35 +50,39 @@
 #' #then be used along with the appropriate creditIndex to forecast future period migration
 #' #effects.
 #'
-#'
+#' \dontrun{
 #' snapshots <- 4    #This uses quarterly transition matrices
 #' interval <- 1    #This gives a 1 year transition matrix
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2005-01-01"
-#' Example9<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
+#' Example9<-TransitionProb(data,startDate, endDate,'duration', period, snapshots, interval)
 #' Example9.1 <- Example9$genMat
 #' creditIndex <- -0.25
 #'
+#' 
+#' Example10 <- transForecast(Example9.1, isGenerator, creditIndex)
+#' }
 #'
-#' Example10 <- transForecast(Example9.1, creditIndex)
-#'
-#'
-transForecast <- function(genMat, creditIndex){
+transForecast <- function(genMat,isGenerator, creditIndex){
 
 
-  Lambda <- genMat
+  
+  if (isGenerator=="Yes"){   #use generator
+      Lambda <- genMat
 
-  # correct diagonal
-  D <- rep(0,dim(Lambda)[2])
-  diag(Lambda) <- D
-  rowsums <- apply(Lambda,1,sum)
-  diag(Lambda) <- -rowsums
+      # correct diagonal
+      D <- rep(0,dim(Lambda)[2])
+      diag(Lambda) <- D
+      rowsums <- apply(Lambda,1,sum)
+      diag(Lambda) <- -rowsums
 
-
-
-  transMat = expm::expm(Lambda)
-  apply(transMat,1,sum)
-
+      transMat = expm::expm(Lambda)
+      apply(transMat,1,sum)
+  
+  } else {
+  
+    transMat = genMat
+}
 
   #graph the thresholds prior to forecasting
 
@@ -130,8 +136,7 @@ transForecast <- function(genMat, creditIndex){
       if(j==dim(thresholds_frcast_final)[2]){
         t <- stats::pnorm(as.numeric(cumprobs_threshold[i,j])-creditIndex)
         thresholds_frcast_final[i,j] <-t
-        #print(paste("t->",t,sep=""))
-
+        
       } else if (j==1) {
 
         t <- 1- sum(as.numeric(thresholds_frcast_final[i,j:dim(thresholds_frcast_final)[2]]))
@@ -139,10 +144,10 @@ transForecast <- function(genMat, creditIndex){
 
 
       } else {
-
-        t <- stats::pnorm(as.numeric(cumprobs_threshold[i,j])-creditIndex) - sum(as.numeric(thresholds_frcast_final[i,j:dim(thresholds_frcast_final)[2]]))
+        j_start <- j+1
+        t <- stats::pnorm(as.numeric(cumprobs_threshold[i,j])-creditIndex) - sum(as.numeric(thresholds_frcast_final[i,j_start:dim(thresholds_frcast_final)[2]]))
         thresholds_frcast_final[i,j] <-t
-        #print(paste("t->",t,sep=""))
+        
       }
 
 

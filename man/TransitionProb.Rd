@@ -56,7 +56,7 @@ where \eqn{Y_{i}(s)} is the number of firms in rating class \eqn{i} at time \eqn
 number of transitions over the period from \eqn{i} to \eqn{j}, where \eqn{i \neq j}.
 }
 \examples{
-
+\dontrun{
 #Example 1:
 #When start date and end date are not specified, the entire dataset is used and the package
 #performs TTC calculations. Equally when snapshots and interval are not specified the defaults
@@ -67,7 +67,7 @@ startDate  <- 0
 endDate    <- 0
 Example1<-TransitionProb(data,startDate,endDate,'cohort', snapshots, interval)
 
-\dontrun{
+
 #Example 2:
 #using the duration method the time window of interest are specified 2-year period from the
 #beginning of 2000 to the beginning of 2002 snapshots and interval are not specified.
@@ -76,7 +76,7 @@ interval <- 0
 startDate  <- "2000-01-01"
 endDate    <- "2002-01-01"
 Example2<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
-}
+
 
 #Example 3:
 #using the cohort method the time window of interest are specified 5-year period from the
@@ -109,7 +109,7 @@ startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
 Example5<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
 
-\dontrun{
+
 #Example 6:
 #assume that the time window of interest is the 2-year period from the beginning of 2000 to
 #the beginning of 2005. We want to estimate 1-year transition probabilities using quarterly
@@ -119,7 +119,7 @@ interval <- 1    #This gives a 1 year transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2002-01-01"
 Example6<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
-}
+
 
 #Example 7:
 #assume that the time window of interest is the 5-year period from the beginning of 2000 to
@@ -141,7 +141,7 @@ interval <- 1    #This gives a 1 year transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
 Example8<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
-
+}
 
 }
 \references{

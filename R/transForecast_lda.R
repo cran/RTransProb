@@ -1,14 +1,13 @@
-#' Forecast - using Support Vector Machines
+#' Forecast - using Linear Discriminant Analysis
 #'
-#' @description This model implements a forecasting method using Support Vector Machines.
+#' @description This model implements a forecasting method using Linear Discriminant Analysis.
 #'
-#' @usage transForecast_svm(data, histData, predData_svm, startDate, endDate,
-#'                     method, interval, snapshots, defind, depVar, indVars,  ratingCat, 
-#'                     pct, tuning, kernelType, cost, cost.weights, gamma, gamma.weights)
+#' @usage transForecast_lda(data, histData, predData_lda, startDate, endDate, method,
+#'                          interval, snapshots, defind, depVar, indVars, pct, ratingCat)
 #'
 #' @param data a table containing historical credit ratings data (i.e., credit migration data). A dataframe of size \emph{nRecords} x 3 where each row contains an ID (column 1), a date (column 2), and a credit rating (column 3); The credit rating is the rating assigned to the corresponding ID on the corresponding date.
 #' @param histData historical macroeconomic,financial and non-financial data.
-#' @param predData_svm forecasting data.
+#' @param predData_lda forecasting data.
 #' @param startDate start date of the estimation time window, in string or numeric format.
 #' @param endDate end date of the estimation time window, in string or numeric format.
 #' @param method  estimation algorithm, in string format. Valid values are 'duration'  or 'cohort'.
@@ -17,35 +16,26 @@
 #' @param defind Default Indicator
 #' @param depVar dependent variable, as a string.
 #' @param indVars list containing the independent variables.
-#' @param ratingCat list containing the unique rating caetgories
 #' @param pct percent of data used in training dataset.
-#' @param tuning perform tuning. If tuning='TRUE' tuning is perform. If tuning='FALSE' tuning is not performed
-#' @param cost cost of constraints violation (default: 1) it is the 'C' constant of the regularization term in the Lagrange formulation.
-#' @param cost.weights vector containing tuning parameters for cost
-#' @param gamma parameter needed for all kernels except linear (default: 1/(data dimension))
-#' @param gamma.weights vector containing tuning parameters for gamma
-#' @param kernelType the kernel used in training and predicting (see Package e1071 for more detail)
+#' @param ratingCat list containing the unique rating caetgories
 #'
-#' @return The output consists of a forecasted transition matrix using SVM.
+#' @return The output consists of a forecasted transition matrix.
 #'
 #' @export
 #'
 #' @author  Abdoulaye (Ab) N'Diaye
 #'
-#'
-#'
 #' @examples
 #' \dontrun{
-#'
-#' 
-#' svm_TM<-transForecast_svm(data, histData, predData_svm,  startDate, endDate, method, interval,  
-#'        snapshots, defind, depVar,indVars,  ratingCat, pct, tuning, kernelType,cost, cost.weights,
-#'        gamma, gamma.weights)
+#' lda_T<-transForecast_lda(data, histData, predData_lda, startDate, endDate, 
+#'   method, interval, snapshots, defind, depVar, indVars, pct, ratingCat)
 #'}
-#'
-transForecast_svm <- function(data, histData, predData_svm, startDate, endDate,  method, interval, snapshots, defind, depVar, indVars,  ratingCat, pct, tuning, kernelType,cost,cost.weights,gamma,gamma.weights) {
 
 
+
+transForecast_lda <- function(data, histData, predData_lda, startDate, endDate, method, interval, snapshots, defind, depVar, indVars,  pct, ratingCat) {
+  
+  
   if (snapshots == 1){
     snaps = "years"
   } else if (snapshots == 4){
@@ -96,35 +86,26 @@ transForecast_svm <- function(data, histData, predData_svm, startDate, endDate, 
   
   
   
-   #(3) extract the aggregate transition counts by date and transition type (i.e, AAA to AA,
-   #    AAA to A, AAA to BBB, etc...)
-   ratingCat <- ratingCat   #c("A","B", "C", "D", "E", "F", "G", "N")
-   df <- VecOfTransData(lstCnt,ratingCat,startDate,endDate,snapshots)
-   df <- subset(df, df[["start_Rating"]] !=defind) #Notes: remove any record having a default
+  #extract the aggregate transition counts by date and transition type (i.e, AAA to AA,
+  #    AAA to A, AAA to BBB, etc...)
+  ratingCat <- ratingCat
+  df <- VecOfTransData(lstCnt,ratingCat,startDate,endDate,snapshots)
+  df <- subset(df, df[["start_Rating"]] !=defind) #Notes: remove any record having a default
   
-
-   transData <- expandTransData(df,wgt)
   
-   
-   depVar <- depVar
-   indVars <-indVars
-   pct <- pct
-   wgt <-  wgt
-   ratingCat <- ratingCat
-   lstCategoricalVars <- lstCategoricalVars
-   tuning <- tuning
-   cost <- cost
-   gamma <- gamma
-   cost.weights <- cost.weights
-   gamma.weights <- gamma.weights
-   kernelType <- kernelType
-   
-    
-   svm_T<-forecast_svm(transData, histData, predData_svm,  startDate, endDate,
-                                   depVar,indVars,  ratingCat, pct, tuning, kernelType,cost, cost.weights,
-                                   gamma, gamma.weights) 
-   return(svm_T)
+  transData <- expandTransData(df,wgt)
+  
+  
+  depVar <- depVar
+  indVars <-indVars
+  pct <- pct
+  wgt <-  wgt
+  ratingCat <- ratingCat
 
-
+  
+  lda_T<-forecast_lda(transData, histData, predData_lda, startDate, endDate,  method, interval, 
+                       snapshots, depVar, indVars, pct, ratingCat)
+  return(lda_T)
+  
+  
 }
-

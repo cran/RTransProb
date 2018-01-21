@@ -4,19 +4,27 @@
 \alias{transForecast_mnl}
 \title{Forecast - using Multinomial Logistic Regression}
 \usage{
-transForecast_mnl(transData, histData, predData, startDate,
-                        endDate, ref, depVar, indVars, ratingCat, wgt)
+transForecast_mnl(data, histData, predData_mnl, startDate, endDate, method, 
+                         interval,snapshots, defind,ref, depVar, indVars, ratingCat, wgt)
 }
 \arguments{
-\item{transData}{dataframe containing date, beginning ratings, ending ratings, and transition counts.}
+\item{data}{a table containing historical credit ratings data (i.e., credit migration data). A dataframe of size \emph{nRecords} x 3 where each row contains an ID (column 1), a date (column 2), and a credit rating (column 3); The credit rating is the rating assigned to the corresponding ID on the corresponding date.}
 
 \item{histData}{historical macroeconomic,financial and non-financial data.}
 
-\item{predData}{forecasting data.}
+\item{predData_mnl}{forecasting data.}
 
 \item{startDate}{start date of the estimation time window, in string or numeric format.}
 
 \item{endDate}{end date of the estimation time window, in string or numeric format.}
+
+\item{method}{estimation algorithm, in string format. Valid values are 'duration'  or 'cohort'.}
+
+\item{interval}{the length of the transition interval under consideration, in years. The default value is 1, \emph{i.e., 1-year transition probabilities are estimated}.}
+
+\item{snapshots}{integer indicating the number of credit-rating snapshots per year to be considered for the estimation. Valid values are 1, 4, or 12. The default value is 1, \emph{i.e., one snapshot per year}. This parameter is only used in the 'cohort' algorithm.}
+
+\item{defind}{Default Indicator}
 
 \item{ref}{base or reference category for the dependent variable.}
 
@@ -45,74 +53,9 @@ that the probability of falling into group j given the set of predictor values x
 \deqn{P(y=k|\emph{X}) = \frac{exp(\emph{X}\beta_{k})}{1+\sum_{j=2}^{N}exp(\emph{X}\beta_{j})}}
 }
 \examples{
-
-#(1) Import Data
-startDate <-"2000-01-01"
-endDate   <-"2002-01-01"
-TotalDateRange <- seq(as.Date(startDate), as.Date(endDate), "years")
-
-
-#(2) Create quarterly transition matrices for the entire date range selected using the normal
-#   procedures
-
-#Set parameters
-snapshots <- 4   #4,#12    #monthly transition matrices
-interval <-  1   #1/12    #1 month transition matrices
-
-#define list to hold initial counts and transition counts
-lstCnt <-rep(list(list()), length(TotalDateRange)-1)
-lstInit <-rep(list(list()), length(TotalDateRange)-1)
-
-#initialize counters
-n <- 1
-k <- 1
-for (l in 1:(length(TotalDateRange)-1)){
-
-  istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "\%Y-\%m-\%d")))
-  iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "\%Y-\%m-\%d")))
-  DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
-
-  for(i in 1:(length(DateRange)-1)){
-
-    sDate  <- as.Date(DateRange[i])
-    eDate    <- as.Date(DateRange[i+1])
-
-    Example1<-TransitionProb(data,sDate, eDate, 'cohort', snapshots, interval)
-
-    lstCnt[[k]][[n]] <- Example1$sampleTotals$totalsMat      #list of monthly transition counts
-    lstInit[[k]][[n]]  <- Example1$sampleTotals$totalsVec    #list of monthly initial counts
-    n <- n+1
-
-    if(n>snapshots){
-      n <- 1
-      k <- k+1
-    }
-
-  }
-
-}
-
-#(3) extract the aggregate transition counts by date and transition type (i.e, AAA to AA,
-#   AAA to A, AAA to BBB, etc...)
-ratingCat <- c("A","B", "C", "D", "E", "F", "G", "N")
-
-df <- VecOfTransData(lstCnt,ratingCat,startDate,endDate,snapshots)
-df <- subset(df, df[["start_Rating"]] !="N")   #Notes: remove any record having a default
-                                               #rating in the 'start_Rating'
-#(4) Construct parameters for MNL model
-startDate <- as.Date("2000-01-01")
-endDate <- as.Date("2005-01-01")
-
-ref <- "A"   #"AAA"
-depVar <- c("end_rating")
-indVars <-c("Macro1", "Financial1","Industry1")
-wgt <-  "mCount"
-ratingCat <- c("A","B", "C", "D", "E", "F", "G")  #NOTE: 'N' (Default Rating) is excluded
-                                                  #(VBA book count data)
-#(5) run mnl model
 \dontrun{
-mnl_T<-transForecast_mnl(df, histData, predData_mnl, startDate, endDate, ref, depVar,
-                         indVars, ratingCat, wgt)
+mnl_TM<-transForecast_mnl(data, histData, predData_mnl, startDate, endDate, method, interval,  
+                         snapshots, defind, ref, depVar,indVars, ratingCat, wgt)
 }
 
 

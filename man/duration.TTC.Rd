@@ -4,44 +4,33 @@
 \alias{duration.TTC}
 \title{Duration - Data Weighting and "TTC" Calculation}
 \usage{
-duration.TTC(lstCnt,lstInit,gYear,snapshots,nStates,transtype,TotalDateRange)
+duration.TTC(lstCnt,lstFirmYears)
 }
 \arguments{
-\item{lstCnt}{annual off-diagonal transition counts (matrix)}
+\item{lstCnt}{off-diagonal transition counts (matrix) for each time-step}
 
-\item{lstInit}{Initial counts for each state (start vector)}
-
-\item{gYear}{count of annual date vector.}
-
-\item{snapshots}{integer indicating the number of credit-rating snapshots per year to be considered for the estimation. Valid values are 1, 4, or 12. The default value is 1, \emph{i.e., one snapshot per year}. This parameter is only used in the 'cohort' algorithm.}
-
-\item{nStates}{number of rating categories.}
-
-\item{transtype}{averaging method. The valid values
-\itemize{
-\item{\emph{transRaw}}
-\item{\emph{genAverage}}
-\item{\emph{transAverageGen}}
-\item{\emph{transAverage}}
-\item{\emph{individualAnnualTrans}}
-}}
-
-\item{TotalDateRange}{annual date vector.}
+\item{lstFirmYears}{firm years each time-step}
 }
 \value{
-\item{transRaw}{transition matrix created from generator matrix created using the average annual transition counts and average annual.}
+\item{CLW}{\emph{Count Level Weighting} - Construct TTC transition matrix from aggregate scaled and weighted counts data (transitions and 'firm-years').}
 
-\item{genAverage}{average annual generator matrix.}
+\item{PTMLW}{\emph{Periodic Transition Matrix Level Weighting} - Construct TTC transition matrix using the average of the weighted transition matrices from each time-step (Scaling is performed at the transition matrix level for each time-step).}
 
-\item{transAverageGen}{transition matrix from average annual generator matrix.}
+\item{PGMLW}{\emph{Periodic Generator Matrix Level Weighting} - Construct TTC transition matrix using the average of the weighted Generator matices from each time-step (Scaling is performed at the generator matrix level for each time-step).}
 
-\item{transAnnual}{individual annual transition matrices.}
+\item{UUPTM}{\emph{Unscaled and UnWeighted Periodic Transition Matrices} - Construction of unscaled and unweighted periodic transition matrices from unscaled and unweighted generator matrices for each time-step .}
+
+\item{WGM}{\emph{Weighted Generator Matrix} - Average generator matrix from each time-step.}
+
+\item{SWT}{\emph{Scaled and Weighted Transitions} - aggregate scaled and weighted transitions}
+
+\item{SWFY}{\emph{Scaled and Weighted Firm Years} - aggregate scaled and weighted firm years}
 }
 \description{
 Calculating \emph{Through-the-Cycle} generator matrix and transition counts using \emph{duration method}
 }
 \details{
-Given data representing \emph{x} years of monthly off-diagonal transition counts, this function combines those data to obtain average monthly counts,
+Given data representing \emph{x} off-diagonal transition counts for each time-step, this function combines those data to obtain average counts for each time-step,
 in such a way as to preserve the information while implementing a weighting scheme that would allow for the weighting of the historical experiences.
 
 Let \eqn{T(m,y)} and \eqn{F(m,y)} represent the off-diagonal transition matrix and 'firm-years' vector, for month = \eqn{m} and year = \eqn{y},
@@ -55,60 +44,25 @@ The three methods of weighting considered for data generated via the \emph{durat
 \enumerate{
 	\item Scale the number of transitions and firm counts/years using the a single year count to preserve dynamics, then average transitions and firms
 	counts/years separately to create a generator matrix.
-	\item Estimate the single-year quantities \emph{(annual generator matrices)}, then average across years
-	\item Average annual transition matrices
+	\item Estimate the single-year quantities \emph{(generator matrices for each time-step)}, then average across years
+	\item Average transition matrices from each time-step
 }
 The Markov property allows for direct weighting as each year can be regarded as distinct.
 }
 \examples{
+\dontrun{
 
-TotalDateRange <- seq(as.Date("2000-01-01"), as.Date("2002-01-01"), "years")
+#Set parameters
+startDate  <- "2000-01-01"
+endDate    <- "2005-01-01"
+method       <- "duration"   
+snapshots <- 4
+interval <-  0
+Example1<-getPIT(data,startDate, endDate,method, snapshots, interval)
 
-snapshots <- 1    #This uses a 1 year transition matrices
-interval <- 1     #This gives a 1 year transition matrix
-
-lstCnt <-rep(list(list()), length(TotalDateRange)-1)
-lstInit <-rep(list(list()), length(TotalDateRange)-1)
-kk <- 1
-k <- 1
-
-#Create transition and inital countsused as inputs to the function
-for (l in 1:(length(TotalDateRange)-1)){
-
-  istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "\%Y-\%m-\%d")))
-  iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "\%Y-\%m-\%d")))
-  DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
-
-  for(i in 1:(length(DateRange)-1)){
-
-    sDate  <- DateRange[i]       # i.e "3/31/1990"
-    eDate    <- DateRange[i+1]     # i.e "6/30/1990"
-
-    t<-TransitionProb(data,sDate, eDate, 'duration', snapshots, interval)
-
-    lstCnt[[k]][[kk]] <- t$sampleTotals$totalsMat
-    lstInit[[k]][[kk]]  <- t$sampleTotals$totalsVec
-
-    if(kk>=snapshots){
-      kk <- 1
-      k <- k+1
-    } else {
-      kk <- kk+1
-    }
-
-  }
+ExampleTTC1<-duration.TTC(Example1$lstCntMat,Example1$lstInitVec)
 
 }
-
-
-
-transtype <- "genAverage"
-gYear <- utils::head(TotalDateRange,-1)
-nStates <- nrow(as.data.frame(lstInit[[1]][1]))
-
-AverageGeneratorMatrices<-duration.TTC(lstCnt,lstInit,gYear,snapshots,nStates,transtype,
-TotalDateRange)
-
 }
 \author{
 Abdoulaye (Ab) N'Diaye

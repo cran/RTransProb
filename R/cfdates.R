@@ -25,7 +25,7 @@
 #' cfdates(sdates, edates, 1)
 #'
 #'
-cfdates <- function(sdates,edates,snapshots){
+cfdates <- function(sdates,edates, snapshots){
 
   sdates <-as.Date(matlabToPOSIX(sdates))
   edates <-as.Date(matlabToPOSIX(edates))
@@ -38,6 +38,8 @@ cfdates <- function(sdates,edates,snapshots){
     edates_mns <- as.numeric(format(edates,'%m'))
     edates_dys <- as.numeric(format(edates,'%d'))
 
+
+  
   if(snapshots==1){
     snapshotDates <- seq(ISOdate(sdates_yrs, sdates_mns,sdates_dys), ISOdate(edates_yrs, edates_mns,edates_dys), by = "years")
   } else if(snapshots==4){
@@ -52,9 +54,8 @@ cfdates <- function(sdates,edates,snapshots){
   } else if(snapshots==356){
     snapshotDates <- seq(ISOdate(sdates_yrs, sdates_mns,sdates_dys), ISOdate(edates_yrs, edates_mns,edates_dys), by = "day")
   }
+  
 
-
-    #print(snapshotDates)
     snapshotDates <- as.Date(snapshotDates)
     snapshotDates <- POSIXTomatlab(as.POSIXlt(as.Date(snapshotDates,format = "%m/%d/%Y")))
   return (snapshotDates)

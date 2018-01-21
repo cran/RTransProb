@@ -55,15 +55,6 @@ For each obligor in a given assigned credit grade:
 }
 }
 }
-\examples{
-portWgts <-  c(100, 100, 100, 100, 100, 100, 100, 100)
-sim <- 100
-nHorizon <- 1.0
-\dontrun{
-t<-duration.CI(AverageGeneratorMatrices,portWgts,nHorizon,sim)
-}
-
-}
 \references{
 Hanson, S. and Schuermann, T. 2005 Confidence Intervals for Probabilities of Default,
 Federal Reserve Bank of New York

@@ -4,10 +4,13 @@
 \alias{transForecast}
 \title{Forecast - using Credit Cycle}
 \usage{
-transForecast(genMat, creditIndex)
+transForecast(genMat, isGenerator, creditIndex)
 }
 \arguments{
 \item{genMat}{Generator Matrix}
+
+\item{isGenerator}{a variable to determine if the input matrix is a generator matrix or a proper transition matrix. 
+The default value is 'No'.}
 
 \item{creditIndex}{a credit index.  The model relies on the assumption that credit migration matrices are driven by
 a single parameter Z, which depicts the average financial health of corporate institutions (credit index). The degree
@@ -43,18 +46,18 @@ See Forest, Belkin and Suchower (1998) for a more detailed discussion
 #then be used along with the appropriate creditIndex to forecast future period migration
 #effects.
 
-
+\dontrun{
 snapshots <- 4    #This uses quarterly transition matrices
 interval <- 1    #This gives a 1 year transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
-Example9<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
+Example9<-TransitionProb(data,startDate, endDate,'duration', period, snapshots, interval)
 Example9.1 <- Example9$genMat
 creditIndex <- -0.25
 
 
-Example10 <- transForecast(Example9.1, creditIndex)
-
+Example10 <- transForecast(Example9.1, isGenerator, creditIndex)
+}
 
 }
 \author{
