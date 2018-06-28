@@ -54,8 +54,80 @@ that the probability of falling into group j given the set of predictor values x
 }
 \examples{
 \dontrun{
-mnl_TM<-transForecast_mnl(data, histData, predData_mnl, startDate, endDate, method, interval,  
-                         snapshots, defind, ref, depVar,indVars, ratingCat, wgt)
+
+library(dplyr)
+library(plyr)
+library(Matrix)
+
+
+
+
+for (i in c(24, 25, 26, 27)) {
+  data <- data
+  
+  histData <- histData
+  
+  
+  predData_mnl2 <- predData_mnl
+  predData_mnl2 <- subset(
+    predData_mnl,
+    X == i,
+    select = c(
+      X3.month.Treasury.rate.Lag.Q4,
+      Unemployment.....YoY.RelChng.Lag.Q2,
+      Industrial.Production,
+      Prime.rate.YoY.RelChng,
+      D_B,
+      D_C,
+      D_D,
+      D_E,
+      D_F,
+      D_G
+    )
+  )
+  indVars   = c(
+    "X3.month.Treasury.rate.Lag.Q4",
+    "Unemployment.....YoY.RelChng.Lag.Q2",
+    "Industrial.Production",
+    "Prime.rate.YoY.RelChng"
+  )
+  
+  
+  startDate = "1991-08-16"
+  endDate   = "2007-08-16"
+  method    = "cohort"
+  snapshots = 1
+  interval  = 1
+  ref       = 'A'
+  depVar    = c("end_rating")
+  ratingCat = c("A", "B", "C", "D", "E", "F", "G", "N")
+  defind    = "N"
+  wgt       = "mCount"
+  
+  
+  
+  transForecast_mnl_out <-
+    transForecast_mnl(
+      data,
+      histData,
+      predData_mnl2,
+      startDate,
+      endDate,
+      method,
+      interval,
+      snapshots,
+      defind,
+      ref,
+      depVar,
+      indVars,
+      ratingCat,
+      wgt
+    )
+  output <- transForecast_mnl_out$mnl_Predict
+  print(output)
+  
+ }
+ 
 }
 
 

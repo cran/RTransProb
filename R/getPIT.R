@@ -36,84 +36,100 @@
 #' }
 
 
-getPIT <- function(data, startDate, endDate, method, snapshots, interval){
-  
-  if (snapshots == 1){
-    snaps = "years"
-  } else if (snapshots == 4){
-    snaps = "quarters"
-  } else if (snapshots == 12){
-    snaps = "months"
-  }
-  
-  #Set parameters
-  startDate  <- startDate   
-  endDate    <- endDate     
-  TotalDateRange <- seq(as.Date(startDate), as.Date(endDate), snaps)
-  
-  snapshots <- snapshots  
-  interval <- interval     
-  AnnualBlock <- as.integer(as.numeric(as.Date(endDate)-as.Date(startDate))/365)+1   
-  
-  lstCnt <-rep(list(list()), AnnualBlock-1)
-  lstInit <-rep(list(list()), AnnualBlock-1)
-  lstPct <-rep(list(list()), AnnualBlock-1)
-  lstGen <-rep(list(list()), AnnualBlock-1)
-  lstMethod <-rep(list(), AnnualBlock-1)
-  
-  #initialize counters
-  n <- 1
-  k <- 1
-  
-  
-  #start progressbar
-  total <- length(TotalDateRange)-1                           ############################
-  pb <- tkProgressBar(title = "progress bar", min = 0,
-                      max = total, width = 300)
-  
-  #get transition counts and percentages
-  for (l in 1:(length(TotalDateRange)-1)){
-    
-    
-    sDate  <- TotalDateRange[l]
-    eDate  <- TotalDateRange[l+1]
-    Example1<-TransitionProb(data,sDate, eDate, method, snapshots, interval)
-    lstCnt[[k]][[n]] <- Example1$sampleTotals$totalsMat #list of quarterly transition counts
-    lstInit[[k]][[n]] <- Example1$sampleTotals$totalsVec #list of annual initial counts
-    
-    if(method=="duration"){
-      lstGen[[k]][[n]]   <- Example1$genMat
+getPIT <-
+  function(data,
+           startDate,
+           endDate,
+           method,
+           snapshots,
+           interval) {
+    if (snapshots == 1) {
+      snaps = "years"
+    } else if (snapshots == 4) {
+      snaps = "quarters"
+    } else if (snapshots == 12) {
+      snaps = "months"
     }
     
-    lstPct[[k]][[n]]   <- Example1$transMat
-    lstMethod[[k]]     <- method
+    #Set parameters
+    startDate  <- startDate
+    endDate    <- endDate
+    TotalDateRange <- seq(as.Date(startDate), as.Date(endDate), snaps)
     
-    n <- n+1
-    if(n>snapshots){
-      n <- 1
-      k <- k+1
+    snapshots <- snapshots
+    interval <- interval
+    AnnualBlock <-
+      as.integer(as.numeric(as.Date(endDate) - as.Date(startDate)) / 365) + 1
+    
+    lstCnt <- rep(list(list()), AnnualBlock - 1)
+    lstInit <- rep(list(list()), AnnualBlock - 1)
+    lstPct <- rep(list(list()), AnnualBlock - 1)
+    lstGen <- rep(list(list()), AnnualBlock - 1)
+    lstMethod <- rep(list(), AnnualBlock - 1)
+    
+    #initialize counters
+    n <- 1
+    k <- 1
+    
+    
+    #start progressbar
+    total <-
+      length(TotalDateRange) - 1                           ############################
+    pb <- tkProgressBar(
+      title = "progress bar",
+      min = 0,
+      max = total,
+      width = 300
+    )
+    
+    #get transition counts and percentages
+    for (l in 1:(length(TotalDateRange) - 1)) {
+      sDate  <- TotalDateRange[l]
+      eDate  <- TotalDateRange[l + 1]
+      Example1 <-
+        TransitionProb(data, sDate, eDate, method, snapshots, interval)
+      lstCnt[[k]][[n]] <-
+        Example1$sampleTotals$totalsMat #list of quarterly transition counts
+      lstInit[[k]][[n]] <-
+        Example1$sampleTotals$totalsVec #list of annual initial counts
+      
+      if (method == "duration") {
+        lstGen[[k]][[n]]   <- Example1$genMat
+      }
+      
+      lstPct[[k]][[n]]   <- Example1$transMat
+      lstMethod[[k]]     <- method
+      
+      n <- n + 1
+      if (n > snapshots) {
+        n <- 1
+        k <- k + 1
+      }
+      
+      Sys.sleep(0.1)
+      setTkProgressBar(pb, l, label = paste(round(l / total * 100, 0),
+                                            "% done"))
     }
     
-    Sys.sleep(0.1)
-    setTkProgressBar(pb, l, label=paste( round(l/total*100, 0),
-                                         "% done"))
+    
+    close(pb)    ############################
+    
+    if (method == "duration") {
+      PIT  <- list(
+        lstCntMat = lstCnt,
+        lstInitVec = lstInit,
+        lstPctMat = lstPct,
+        lstGen = lstGen,
+        lstMethod = lstMethod
+      )
+    } else {
+      PIT  <- list(
+        lstCntMat = lstCnt,
+        lstInitVec = lstInit,
+        lstPctMat = lstPct,
+        lstMethod = lstMethod
+      )
+    }
+    
+    return (PIT)
   }
-  
-  
-  close(pb)    ############################
-  
-  if(method == "duration"){
-    PIT  <- list(lstCntMat=lstCnt,
-                 lstInitVec=lstInit,
-                 lstPctMat=lstPct,
-                 lstGen = lstGen,
-                 lstMethod=lstMethod)
-  } else {
-    PIT  <- list(lstCntMat=lstCnt,
-                 lstInitVec=lstInit,
-                 lstPctMat=lstPct,
-                 lstMethod=lstMethod)
-  }
-  
-  return (PIT)
-}

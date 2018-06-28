@@ -31,16 +31,86 @@
 #' @export
 #'
 #' @author  Abdoulaye (Ab) N'Diaye
-#'
-#'
-#'
+#' 
 #' @examples
 #' \dontrun{
-#'
+#' library(dplyr)
+#' library(plyr)
+#' library(Matrix)
+#' library(tictoc)
 #' 
-#' svm_TM<-transForecast_svm(data, histData, predData_svm,  startDate, endDate, method, interval,  
-#'        snapshots, defind, depVar,indVars,  ratingCat, pct, tuning, kernelType,cost, cost.weights,
-#'        gamma, gamma.weights)
+#' 
+#' 
+#' for (i in c(24, 25, 26, 27)) {
+#'   data <- data
+#'   
+#'   histData <- histData.normz
+#'   
+#'   
+#'   predData_svm2 <- predData_svm
+#'   predData_svm2 <- subset(
+#'     predData_svm2,
+#'     X == i,
+#'     select = c(
+#'       X3.month.Treasury.rate.normz.Lag.Q4,
+#'       Unemployment.....normz.YoY.AbsChng.Lag.Q2,
+#'       GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2
+#'     )
+#'   )
+#'   
+#'   indVars   = c(
+#'     "X3.month.Treasury.rate.normz.Lag.Q4",
+#'     "Unemployment.....normz.YoY.AbsChng.Lag.Q2",
+#'     "GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2"
+#'   )
+#'   
+#'   
+#'   startDate = "1991-08-16"
+#'   endDate   = "2007-08-16"
+#'   
+#'   depVar <- c("end_rating")
+#'   
+#'   pct <- 1
+#'   wgt <-  "mCount"
+#'   ratingCat <- c("A", "B", "C", "D", "E", "F", "G")
+#'   defind    <- "G"
+#'   lstCategoricalVars <- c("end_rating")
+#'   tuning <- "FALSE"
+#'   cost <- 0.01
+#'   gamma <- 0.01
+#'   cost.weights <- c(0.01, 0.05, 0.1, 10)
+#'   gamma.weights <- c(0.01, 0.05, 0.1, 0.25)
+#'   kernelType <- "radial"
+#'   method    = "cohort"
+#'   snapshots = 1
+#'   interval  = 1
+#'   
+#'   
+#'   svm_TM <-
+#'     transForecast_svm(
+#'       data,
+#'       histData,
+#'       predData_svm2,
+#'       startDate,
+#'       endDate,
+#'       method,
+#'       interval,
+#'       snapshots,
+#'       defind,
+#'       depVar,
+#'       indVars,
+#'       ratingCat,
+#'       pct,
+#'       tuning,
+#'       kernelType,
+#'       cost,
+#'       cost.weights,
+#'       gamma,
+#'       gamma.weights
+#'     )
+#'   print(svm_TM)
+#'   
+#' }
 #'}
 #'
 transForecast_svm <- function(data, histData, predData_svm, startDate, endDate,  method, interval, snapshots, defind, depVar, indVars,  ratingCat, pct, tuning, kernelType,cost,cost.weights,gamma,gamma.weights) {
@@ -127,4 +197,5 @@ transForecast_svm <- function(data, histData, predData_svm, startDate, endDate, 
 
 
 }
+
 

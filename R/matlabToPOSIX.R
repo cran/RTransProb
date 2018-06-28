@@ -20,10 +20,15 @@
 matlabToPOSIX = function(gTime, timez = "UTC") {
   d = gTime - 719529
   s = d * 86400
-
-  R_Date <- as.POSIXct(strftime(as.POSIXct(s, origin = '1970-1-1',
-            tz = 'UTC'), format = '%Y-%m-%d %H:%M',
-            tz = 'UTC', usetz = FALSE), tz = timez)
+  
+  R_Date <- as.POSIXct(strftime(
+    as.POSIXct(s, origin = '1970-1-1',
+               tz = 'UTC'),
+    format = '%Y-%m-%d %H:%M',
+    tz = 'UTC',
+    usetz = FALSE
+  ),
+  tz = timez)
   return(R_Date)
 }
 

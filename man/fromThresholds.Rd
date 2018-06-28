@@ -17,6 +17,7 @@ Use this function to transform credit quality thresholds into transition probabi
 }
 \examples{
 
+\dontrun{
 rc <- c("AAA", "AA", "A", "BBB", "BB", "B", "CCC", "D")
 t<- matrix(c(Inf,-1.3656,-2.1806,-3.0781,-3.5482,-4.1612,-4.2591,-4.8399,
              Inf, 1.5712,-1.5217,-2.3028,-2.6872,-3.5256,-3.7324,-4.1972,
@@ -30,7 +31,7 @@ t<- matrix(c(Inf,-1.3656,-2.1806,-3.0781,-3.5482,-4.1612,-4.2591,-4.8399,
 
 
 transmatrix <- fromThresholds(t)
-
+}
 
 }
 \references{

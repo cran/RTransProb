@@ -95,126 +95,131 @@
 #' tolerance_Cohort <-cohort.CI(transMatrix,initCount,sim)
 #' }
 
-cohort.CI <- function(transMatrix,initCount,sim){
-
+cohort.CI <- function(transMatrix, initCount, sim) {
   nPeriods <- length(transMatrix)
   
-  validMonths <- c(1,4,6,12)
-  if (!isTRUE(nPeriods %in% validMonths)){
+  validMonths <- c(1, 4, 6, 12)
+  if (!isTRUE(nPeriods %in% validMonths)) {
     stop("Error: Invalid Months. Valid month numbers are 1, 4, 6 or 12.")
   }
-
-
+  
+  
   #Check the lists to see if the count matrix and start vector counts are valid
-  for (k in 1:length(transMatrix)){
-
+  for (k in 1:length(transMatrix)) {
     cm.matrix(as.matrix(as.data.frame(transMatrix[[k]])))
   }
-
-
-  if (!is.numeric(initCount)){
+  
+  
+  if (!is.numeric(initCount)) {
     stop("Error: The start vector counts vector is not numeric")
   }
-
-
-  if(0 %in% initCount){
+  
+  
+  if (0 %in% initCount) {
     stop("Error: There is at least 1 zero in the start vector")
   }
-
-
-
+  
+  
+  
   nStates_row <- nrow(as.data.frame(transMatrix[[1]]))
   nStates_col <- ncol(as.data.frame(transMatrix[[1]]))
-
-  if(nStates_row ==nStates_col){
+  
+  if (nStates_row == nStates_col) {
     nStates <- nStates_row
   } else{
     stop("Error: Transition matrix rows and columns must be equal")
   }
-
   
-  if (nStates < 2 || nStates > 25){
-    stop("Error: Invalid Number of 'Risk States'. Valid 'Number of Risk States' are between 2 and 25")
+  
+  if (nStates < 2 || nStates > 25) {
+    stop(
+      "Error: Invalid Number of 'Risk States'. Valid 'Number of Risk States' are between 2 and 25"
+    )
   }
   
   
   # Initialize output matrices
-  resmat <-replicate(nPeriods, matrix(0,nStates,nStates), simplify=F)
-  results <- matrix(0,sim,nStates)
-  initCount = 9*initCount;
-
-
+  resmat <-
+    replicate(nPeriods, matrix(0, nStates, nStates), simplify = F)
+  results <- matrix(0, sim, nStates)
+  initCount = 9 * initCount
+  
+  
+  
   # Obtain dimensions of input transition array
-  k <- length(transMatrix)        #get the number of matrices in the list 'X'
+  k <-
+    length(transMatrix)        #get the number of matrices in the list 'X'
   m <- dim(transMatrix[[1]])[1]   #get the matrix row count
   n <- dim(transMatrix[[1]])[2]   #get the matrix column count
-
-
+  
+  
   # Scale rows to sum to one to account for rounding
-  for ( i in 1:k){
+  for (i in 1:k) {
     temp <- rowSums(transMatrix[[i]])
-    transMatrix[[i]]<-  matrix(transMatrix[[i]],m)/matrix(pracma::repmat(temp,1,m),m)
-
+    transMatrix[[i]] <-
+      matrix(transMatrix[[i]], m) / matrix(pracma::repmat(temp, 1, m), m)
+    
   }
-
-
+  
+  
   #Simulation loop
-  for (j in 1:sim){
-
+  for (j in 1:sim) {
     #Initialize arrays
-    graden <-  matrix(0,1,m)
-    prodmat <- diag(1,m)
-
+    graden <-  matrix(0, 1, m)
+    prodmat <- diag(1, m)
+    
     # Loop over months in year
-    for (i in 1:k){
-
-      if (i == 1){
+    for (i in 1:k) {
+      if (i == 1) {
         ndraw <-  initCount
-      }else{
-        ndraw <- graden;
+      } else{
+        ndraw <- graden
+        
       }
-
+      
       # Multinomial random draws to produce next month
       # transition matrix. Post multiply previous months
       # to calculate annual transition matrix
-      for (z in 1:m){
-
-        mr1 <- matrix(stats::rmultinom(1,size=ndraw[z],prob=matrix(transMatrix[[i]],m)[z,]),1)
-
-        if (z == 1){
+      for (z in 1:m) {
+        mr1 <-
+          matrix(stats::rmultinom(
+            1,
+            size = ndraw[z],
+            prob = matrix(transMatrix[[i]], m)[z, ]
+          ), 1)
+        
+        if (z == 1) {
           mr <-  mr1
-        }else{
-          mr <-  rbind(mr,mr1)
+        } else{
+          mr <-  rbind(mr, mr1)
         }
-
+        
       }
-
+      
       graden <- rowSums(mr)
-      resmat[[i]] <- mr/matrix(pracma::repmat(ndraw,1,m),m)
-      prodmat <- prodmat%*%resmat[[i]]
-
-
+      resmat[[i]] <- mr / matrix(pracma::repmat(ndraw, 1, m), m)
+      prodmat <- prodmat %*% resmat[[i]]
+      
+      
     }
-
-    results[j,] <- t(prodmat[,m])
-
-
+    
+    results[j, ] <- t(prodmat[, m])
+    
+    
   }
-
-
+  
+  
   # Calculate annual transition matrix
-  testDiscrete <- diag(1,m)
-  for (i in 1:nPeriods){
-
-    testDiscrete <- testDiscrete * matrix(transMatrix[[i]],m)
-
+  testDiscrete <- diag(1, m)
+  for (i in 1:nPeriods) {
+    testDiscrete <- testDiscrete * matrix(transMatrix[[i]], m)
+    
   }
-
+  
   # Percentiles of PD distribution
-  outpcnt <- matrixStats::colQuantiles(results,probs = c(.025, .05, .25, .50, .75, .95, .975))
-
+  outpcnt <-
+    matrixStats::colQuantiles(results, probs = c(.025, .05, .25, .50, .75, .95, .975))
+  
   return(outpcnt)
-
+  
 }
-
-

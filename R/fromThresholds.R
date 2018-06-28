@@ -18,6 +18,7 @@
 #'
 #' @examples
 #'
+#' \dontrun{
 #' rc <- c("AAA", "AA", "A", "BBB", "BB", "B", "CCC", "D")
 #' t<- matrix(c(Inf,-1.3656,-2.1806,-3.0781,-3.5482,-4.1612,-4.2591,-4.8399,
 #'              Inf, 1.5712,-1.5217,-2.3028,-2.6872,-3.5256,-3.7324,-4.1972,
@@ -31,50 +32,53 @@
 #'
 #'
 #' transmatrix <- fromThresholds(t)
+#'}
 #'
-#'
-fromThresholds <- function(thresh){
-
-  if (dim(thresh)[1] < 2 || dim(thresh)[2] < 2 || dim(thresh)[1] != dim(thresh)[2])
+fromThresholds <- function(thresh) {
+  if (dim(thresh)[1] < 2 ||
+      dim(thresh)[2] < 2 || dim(thresh)[1] != dim(thresh)[2])
     stop("Error: incorrect dimension of the matrix")
-
-  if (!(is.numeric(thresh))){
+  
+  if (!(is.numeric(thresh))) {
     stop("Error: non-numeric input")
   }
-
-  if(!(thresh[,1] %in% Inf)){
-    stop("Error: non 'Inf' in the first column")
-  }
-
-  tolmono = 1e-6;
-  for (i in 1:nrow(thresh)){
-    j1=min(which(thresh[i,]!=Inf))
-
-
-    if (!is.null(j1)){
-      j2=max(which(thresh[i,]!=Inf));
-
-      if (j2>j1){
-        diffTh = diff(as.vector(as.matrix(thresh[i,j1:j2])));
-
-        if (any(any(diffTh>tolmono))){
-
-        } else if (any(any(diffTh>0))){
-
+  
+  # if( any(!is.infinite(data[,1]))){
+  #   stop("Error: non 'Inf' in the first column")
+  # }
+  
+  tolmono = 1e-6
+  
+  for (i in 1:nrow(thresh)) {
+    j1 = min(which(thresh[i, ] != Inf))
+    
+    
+    if (!is.null(j1)) {
+      j2 = max(which(thresh[i, ] != Inf))
+      
+      
+      if (j2 > j1) {
+        diffTh = diff(as.vector(as.matrix(thresh[i, j1:j2])))
+        
+        
+        if (any(any(diffTh > tolmono))) {
+          
+        } else if (any(any(diffTh > 0))) {
+          
         }
       }
     }
-
+    
   }
-
+  
   # Get cum prob
-  cumprob =  stats::pnorm(t(apply(thresh,1,rev)))
-
+  cumprob =  stats::pnorm(t(apply(thresh, 1, rev)))
+  
   # Get transition probabilities
-  trans = cumprob;
-  trans[,2:nrow(trans)] = t(diff(t(cumprob)))
-
+  trans = cumprob
+  
+  trans[, 2:nrow(trans)] = t(diff(t(cumprob)))
+  
   # Flip and convert output matrix from decimal to percent
-  trans = t(apply(trans,1,rev))*100
+  trans = t(apply(trans, 1, rev)) * 100
 }
-

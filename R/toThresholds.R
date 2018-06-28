@@ -20,6 +20,7 @@
 #'
 #' @examples
 #'
+#' \dontrun{
 #' rc <- c("AAA", "AA", "A", "BBB", "BB", "B", "CCC", "D")
 #' t<- matrix(c(91.3969, 7.1423, 1.3566, 0.0848, 0.0178, 0.0006, 0.0010, 0.0001,
 #'               5.8072, 87.7881, 5.3402, 0.7040, 0.3391, 0.0116, 0.0081, 0.0014,
@@ -33,61 +34,71 @@
 #'
 #'
 #' thresholds<-toThresholds(t)
+#' }
 #'
 
-toThresholds <- function(trans){
-
+toThresholds <- function(trans) {
   cm.matrix(trans)
-
-  if (!(is.numeric(trans))){
+  
+  if (!(is.numeric(trans))) {
     stop("Error: non-numeric input")
   }
-
-
-  tolbnd = 1e-3; # tenth of basis point
-  tolsum = 1e-2; # basis point
-
-  if (any(any(trans< (-tolbnd)))){
+  
+  
+  tolbnd = 1e-3
+  # tenth of basis point
+  tolsum = 1e-2
+  # basis point
+  
+  if (any(any(trans < (-tolbnd)))) {
     stop("Error: Lower Bound Violation")
   }
-
-
-  if (any(any(trans>(100+tolbnd)))){
+  
+  
+  if (any(any(trans > (100 + tolbnd)))) {
     stop("Error: Upper Bound Violation")
   }
-
-
-  if (any(abs(rowSums(trans)-100*matrix(1,nrow(trans),1))>(tolsum))){
+  
+  
+  if (any(abs(rowSums(trans) - 100 * matrix(1, nrow(trans), 1)) > (tolsum))) {
     stop("Error: Sum By Rows Violation")
   }
-
+  
   # Truncate small bound violations, and rescale to ensure rows add up to
   # exactly 1 (in decimal format to apply norminv)
-  trans = pmax(trans,0);
-  trans = pmin(trans,100);
-  t<-diag(rowSums(trans))
-  trans = solve(t)%*% as.matrix(trans)
-
+  trans = pmax(trans, 0)
+  
+  trans = pmin(trans, 100)
+  
+  t <- diag(rowSums(trans))
+  trans = solve(t) %*% as.matrix(trans)
+  
   # Get cum prob and ensure they range from 0 to 1
-  trans_rev<-rev(as.data.frame(trans))
-  cumprob<-t(apply(trans_rev,1,cumsum))
-  cumprob<-rev(as.data.frame(cumprob))
-
-
-  cumprob = pmax(cumprob,0);
-  cumprob = pmin(cumprob,1);
-  r <- which(as.matrix(cumprob[,1])<1)
-
-  if(length(r)!=0){
-    s <- (as.matrix(cumprob[r,]) == as.data.frame(pracma::repmat(cumprob[r,1],1,ncol(cumprob))));
-    s <-  1*s                #convert TRUE/FALSE to 0/1
-    for (i in 1:length(r)){
-      cumprob[r[i],s[i]]=1;
+  trans_rev <- rev(as.data.frame(trans))
+  cumprob <- t(apply(trans_rev, 1, cumsum))
+  cumprob <- rev(as.data.frame(cumprob))
+  
+  
+  cumprob = pmax(cumprob, 0)
+  
+  cumprob = pmin(cumprob, 1)
+  
+  r <- which(as.matrix(cumprob[, 1]) < 1)
+  
+  if (length(r) != 0) {
+    s <-
+      (as.matrix(cumprob[r, ]) == as.data.frame(pracma::repmat(cumprob[r, 1], 1, ncol(cumprob))))
+    
+    s <-  1 * s                #convert TRUE/FALSE to 0/1
+    for (i in 1:length(r)) {
+      cumprob[r[i], s[i]] = 1
+      
     }
   }
-
+  
   # Transform into thresholds
-  thresh = stats::qnorm(as.matrix(cumprob));
-
+  thresh = stats::qnorm(as.matrix(cumprob))
+  
+  
 }
 

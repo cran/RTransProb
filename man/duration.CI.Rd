@@ -55,6 +55,29 @@ For each obligor in a given assigned credit grade:
 }
 }
 }
+\examples{
+\dontrun{
+startDate  <- "2000-01-01"
+endDate    <- "2005-01-01"
+method       <- "duration" 
+snapshots <- 4
+interval  <-  0
+Example1  <-getPIT(data,startDate, endDate,method, snapshots, interval)
+
+lstInit <- Example1$lstInitVec[lapply(Example1$lstInitVec,length)>0]
+lstCnt <-  Example1$lstCntMat[lapply(Example1$lstCntMat,length)>0]
+ExampleTTC1<-duration.TTC(Example1$lstCntMat,Example1$lstInitVec)
+
+
+genMat   <- ExampleTTC1$WGM
+portWgts <- ExampleTTC1$SWFY[,1]
+nHorizon <- length(ExampleTTC1$UUPTM[[1]])
+sim      <- 100
+
+tolerance_Duration <- duration.CI(genMat,portWgts,nHorizon,sim)
+}
+
+}
 \references{
 Hanson, S. and Schuermann, T. 2005 Confidence Intervals for Probabilities of Default,
 Federal Reserve Bank of New York

@@ -42,8 +42,70 @@ This model implements a forecasting method using Linear Discriminant Analysis.
 }
 \examples{
 \dontrun{
-lda_T<-transForecast_lda(data, histData, predData_lda, startDate, endDate, 
-  method, interval, snapshots, defind, depVar, indVars, pct, ratingCat)
+
+library(dplyr)
+library(plyr)
+library(Matrix)
+
+
+for (i in c(24, 25, 26, 27)) {
+  data <- data
+  
+  histData <- histData.normz
+  
+  
+  predData_lda2 <- predData_lda
+  predData_lda2 <- subset(
+    predData_lda2,
+    X == i,
+    select = c(
+      X3.month.Treasury.rate.normz.Lag.Q4,
+      Unemployment.....normz.YoY.AbsChng.Lag.Q2,
+      GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2
+    )
+  )
+  indVars   = c(
+    "X3.month.Treasury.rate.normz.Lag.Q4",
+    "Unemployment.....normz.YoY.AbsChng.Lag.Q2",
+    "GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2"
+  )
+  
+  
+  
+  startDate = "1991-08-16"
+  endDate   = "2007-08-16"
+  
+  
+  depVar <- c("end_rating")
+  pct <- 1
+  wgt <-  "mCount"
+  ratingCat <- c("A", "B", "C", "D", "E", "F", "G")
+  defind    <- "G"
+  method    = "cohort"
+  snapshots = 1
+  interval  = 1
+  
+  
+  lda_TM <-
+    transForecast_lda(
+      data,
+      histData,
+      predData_lda2,
+      startDate,
+      endDate,
+      method,
+      interval,
+      snapshots,
+      defind,
+      depVar,
+      indVars,
+      pct,
+      ratingCat
+    )
+  print(lda_TM)
+  
+}
+
 }
 }
 \author{

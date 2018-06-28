@@ -64,16 +64,16 @@
 #' https://ssrn.com/abstract=1344897
 #'
 #' @examples
-#' #Set parameters
+#' \dontrun{
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2005-01-01"
 #' method       <- "duration" 
 #' snapshots <- 4
-#' interval <-  0
-#' Example1<-getPIT(data,startDate, endDate,method, snapshots, interval)
+#' interval  <-  0
+#' Example1  <-getPIT(data,startDate, endDate,method, snapshots, interval)
 #' 
 #' lstInit <- Example1$lstInitVec[lapply(Example1$lstInitVec,length)>0]
-#' lstCnt <- Example1$lstCntMat[lapply(Example1$lstCntMat,length)>0]
+#' lstCnt <-  Example1$lstCntMat[lapply(Example1$lstCntMat,length)>0]
 #' ExampleTTC1<-duration.TTC(Example1$lstCntMat,Example1$lstInitVec)
 #' 
 #' 
@@ -85,154 +85,151 @@
 #' tolerance_Duration <- duration.CI(genMat,portWgts,nHorizon,sim)
 #' }
 #'
-duration.CI <- function(genMat,portWgts,nHorizon,sim){
-
-  
-  
-  if (nHorizon <1){
+duration.CI <- function(genMat, portWgts, nHorizon, sim) {
+  if (nHorizon < 1) {
     stop("Error: Invalid Horizon. Valid Horizon numbers are greater than 0")
   }
-
-
-
-  if (!is.numeric(portWgts)){
+  
+  
+  
+  if (!is.numeric(portWgts)) {
     stop("Error: The initial counts vector (start vector) is not numeric")
   }
-
-
-  if(0 %in% portWgts){
+  
+  
+  if (0 %in% portWgts) {
     stop("Error: There is at least 1 zero in the initial counts vector (start vector)")
   }
-
-
+  
+  
   nStates_row <- nrow(genMat)
   nStates_col <- ncol(genMat)
-
-  if(nStates_row ==nStates_col){
+  
+  if (nStates_row == nStates_col) {
     nStates <- nStates_row
   } else{
     stop("Error: Transition matrix rows and columns must be equal")
   }
-
-
-  if(length(portWgts)!=nStates_row){
+  
+  
+  if (length(portWgts) != nStates_row) {
     stop("Error: the number of weights must correspond to the number of States")
   }
-
+  
   portWgts <- portWgts
   sim <- sim
   horizon <- nHorizon
-
+  
   # Number of states and vector enumerating them
-  nstates <- length(genMat[,1])
+  nstates <- length(genMat[, 1])
   stateVec <- 1:nstates
-
-
+  
+  
   # Fix the last row
-  sumLastRow <- sum(genMat[nstates,])
-  if(sumLastRow==0){
-    genMat[nstates,] <- 0
-    genMat[nstates,nstates-1] <- 0.0001
-    genMat[nstates,nstates] <- -0.0001
+  sumLastRow <- sum(genMat[nstates, ])
+  if (sumLastRow == 0) {
+    genMat[nstates, ] <- 0
+    genMat[nstates, nstates - 1] <- 0.0001
+    genMat[nstates, nstates] <- -0.0001
   }
-
-
+  
+  
   # Probabilities for state movements
-  probs = ((matrix(1,nstates,nstates) - diag(1,nstates)) * genMat)/matrix(pracma::repmat(rowSums((matrix(1,nstates,nstates)  - diag(1,nstates)) * genMat),1,nstates),nstates)
-
-
+  probs = ((matrix(1, nstates, nstates) - diag(1, nstates)) * genMat) /
+    matrix(pracma::repmat(rowSums((
+      matrix(1, nstates, nstates)  - diag(1, nstates)
+    ) * genMat), 1, nstates), nstates)
+  
+  
   # Fix the last row
-  sumLastRow <- sum(probs[,nstates])
-  if(is.nan(sumLastRow)){
-    probs[nstates,] <- 0
-    probs[nstates,nstates-1] <- 1
-
+  sumLastRow <- sum(probs[, nstates])
+  if (is.nan(sumLastRow)) {
+    probs[nstates, ] <- 0
+    probs[nstates, nstates - 1] <- 1
+    
   }
-
+  
   # Default vectors
-  defVec = matrix(0,sim,nstates)
-
-
-  for (i in 1:sim){
-
-    transMat = matrix(0,nstates,nstates)
-    stateTime = matrix(0,nstates,nstates)
-    simResultsMat = c(0,0,0,0,0)
-
-
-    for (j in 1:nstates){
-
-      for (k in 1:portWgts[j]){
-
-
+  defVec = matrix(0, sim, nstates)
+  
+  
+  for (i in 1:sim) {
+    transMat = matrix(0, nstates, nstates)
+    stateTime = matrix(0, nstates, nstates)
+    simResultsMat = c(0, 0, 0, 0, 0)
+    
+    
+    for (j in 1:nstates) {
+      for (k in 1:portWgts[j]) {
         # Starting values for the replication
-        tempResultsMat <- matrix(0,1,5)
+        tempResultsMat <- matrix(0, 1, 5)
         currentState <- j
         timeToHorizon <- horizon
-
-
-        while (timeToHorizon > 0){
-
+        
+        
+        while (timeToHorizon > 0) {
           # Draw from the relevant exponential distribution and write to results vector
-          eDraw <- stats::rexp(1,1/(-1/genMat[currentState,currentState]))
-          tempResultsMat[,1] <- i
-          tempResultsMat[,2] <- k
-          tempResultsMat[,3] <- currentState
-          tempResultsMat[,4] <- eDraw
-
+          eDraw <-
+            stats::rexp(1, 1 / (-1 / genMat[currentState, currentState]))
+          tempResultsMat[, 1] <- i
+          tempResultsMat[, 2] <- k
+          tempResultsMat[, 3] <- currentState
+          tempResultsMat[, 4] <- eDraw
+          
           # # If sojourn time is less than time remaining to horizon draw from
           # # multinomial distribution defined by off-diagonal element of generator row
           # # and record time spent in "old" state and transition ("new") state
           # # Calculate time remaining to horizon
-          if (eDraw < timeToHorizon){
-
+          if (eDraw < timeToHorizon) {
             timeToHorizon <- timeToHorizon - eDraw
-            stateTime[j,currentState] = stateTime[j,currentState] + eDraw
-            newState <- colSums(stats::rmultinom(1,size=1,prob=probs[currentState,]) * stateVec)
-
+            stateTime[j, currentState] = stateTime[j, currentState] + eDraw
+            newState <-
+              colSums(stats::rmultinom(1, size = 1, prob = probs[currentState, ]) * stateVec)
+            
             transMat[currentState, newState] = transMat[currentState, newState] + 1
             tempResultsMat[5] = newState
-
-
+            
+            
             # If sojourn time is greater than or equal to time remaining to horizon
             # record time spent in old state and set time remaining to horizon to zero
-          } else if (eDraw >= timeToHorizon){
-
-            stateTime[j,currentState] <- stateTime[j,currentState] + timeToHorizon
+          } else if (eDraw >= timeToHorizon) {
+            stateTime[j, currentState] <-
+              stateTime[j, currentState] + timeToHorizon
             tempResultsMat[5] = currentState
             newState <- currentState
             timeToHorizon <- 0
           }
-
-
+          
+          
           # Write temporary results vector to output matrix
           # Use this only to track the intermediate movements.
-
-          if (i*j*k == 1){
+          
+          if (i * j * k == 1) {
             simResultsMat <- tempResultsMat
           } else {
             simResultsMat <- cbind(simResultsMat, tempResultsMat)
           }
-
+          
           currentState <- newState
-
+          
         }
       }
     }
-
+    
     # Calculate simulated generator and resulting default vector
-    x =  t(matrix(pracma::repmat(colSums(stateTime,1),nstates,1),nstates))
-    simGen = transMat/x
-    simGen = simGen-diag(rowSums(simGen,2))
+    x =  t(matrix(pracma::repmat(colSums(stateTime, 1), nstates, 1), nstates))
+    simGen = transMat / x
+    simGen = simGen - diag(rowSums(simGen, 2))
     simTrans = expm::expm(simGen)
-    defVec[i,] = t(simTrans[,nstates])
-
+    defVec[i, ] = t(simTrans[, nstates])
+    
   }
-
-  outpcnt <- matrixStats::colQuantiles(defVec,probs = c(.025, .05, .25, .50, .75, .95, .975))
-
+  
+  outpcnt <-
+    matrixStats::colQuantiles(defVec, probs = c(.025, .05, .25, .50, .75, .95, .975))
+  
   return(outpcnt)
-
+  
 }
 
 

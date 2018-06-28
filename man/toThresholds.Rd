@@ -17,6 +17,7 @@ Use this function to transform transition probabilities into credit quality thre
 }
 \examples{
 
+\dontrun{
 rc <- c("AAA", "AA", "A", "BBB", "BB", "B", "CCC", "D")
 t<- matrix(c(91.3969, 7.1423, 1.3566, 0.0848, 0.0178, 0.0006, 0.0010, 0.0001,
               5.8072, 87.7881, 5.3402, 0.7040, 0.3391, 0.0116, 0.0081, 0.0014,
@@ -30,6 +31,7 @@ t<- matrix(c(91.3969, 7.1423, 1.3566, 0.0848, 0.0178, 0.0006, 0.0010, 0.0001,
 
 
 thresholds<-toThresholds(t)
+}
 
 }
 \references{

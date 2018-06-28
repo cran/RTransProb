@@ -146,213 +146,249 @@
 #' Example8<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
 #' }
 #'
-TransitionProb <- function(data, startDate, endDate, method, snapshots, interval ){
-
-  options(warn=-1)
-  data <- fixDate(data)
-  data_names <- names(data)
-
-  # if(!isTRUE('ID' %in% data_names)){
-  #     stop("Error: Invalid input data. The field 'ID' is missing")
-  # } else if (!isTRUE('mDate' %in% data_names)) {
-  #     stop("Error: Invalid input data. The field 'mDate' is missing")
-  # } else if (!isTRUE('Ratings' %in% data_names)) {
-  #     stop("Error: Invalid input data. The field 'Ratings' is missing")
-  # } else if (!isTRUE('Num_Ratings' %in% data_names)){
-  #     stop("Error: Invalid input data. The field 'Num_Ratings' is missing")
-  # }
-
-  validSnapShots <- c(0,1,4,12)
-  if (!isTRUE(snapshots %in% validSnapShots)){
-    stop("Error: Invalid Snapshots Per Year. Valid values are 1, 4, or 12")
-  }
-
-  if (!(is.numeric(interval)) || interval < 0){
-    stop("Error: Invalid interval values. Enter positive values greater than 0")
-  }
-
-  validMethod <- c('cohort','duration','tnh')
-  if (!isTRUE(method %in% validMethod)){
-    stop("Error: Invalid Method. Valid methods are  either 'cohort', 'duration' or 'tnh'")
-  }
-
-
-  if(sum((data$Num_Ratings %in% c(0))*1)!= 0 ){
-    stop("Error: Invalid 'Num_Rating' in the input data set. Zero (0) is not a valid numerical rating")
-  }
-  
-  if(anyNA(data)){
-    stop("Error: Invalid values in the input data set. Correct any 'NA' in the dataframe ")
-  }
-  
-  if(method=="tnh"){
-  
-      TotalDateRange <- as.Date(chron::seq.dates(format(as.Date(startDate),format="%m/%d/%Y"),format(as.Date(endDate),format="%m/%d/%Y"),by="months"),"%Y-%m-%d")
-
-      lstCnt <-list()
+TransitionProb <-
+  function(data,
+           startDate,
+           endDate,
+           method,
+           snapshots,
+           interval) {
+    options(warn = -1)
+    data <- fixDate(data)
+    data_names <- names(data)
+    
+    # if(!isTRUE('ID' %in% data_names)){
+    #     stop("Error: Invalid input data. The field 'ID' is missing")
+    # } else if (!isTRUE('mDate' %in% data_names)) {
+    #     stop("Error: Invalid input data. The field 'mDate' is missing")
+    # } else if (!isTRUE('Ratings' %in% data_names)) {
+    #     stop("Error: Invalid input data. The field 'Ratings' is missing")
+    # } else if (!isTRUE('Num_Ratings' %in% data_names)){
+    #     stop("Error: Invalid input data. The field 'Num_Ratings' is missing")
+    # }
+    
+    validSnapShots <- c(0, 1, 4, 12)
+    if (!isTRUE(snapshots %in% validSnapShots)) {
+      stop("Error: Invalid Snapshots Per Year. Valid values are 1, 4, or 12")
+    }
+    
+    if (!(is.numeric(interval)) || interval < 0) {
+      stop("Error: Invalid interval values. Enter positive values greater than 0")
+    }
+    
+    validMethod <- c('cohort', 'duration', 'tnh')
+    if (!isTRUE(method %in% validMethod)) {
+      stop("Error: Invalid Method. Valid methods are  either 'cohort', 'duration' or 'tnh'")
+    }
+    
+    
+    if (sum((data$Num_Ratings %in% c(0)) * 1) != 0) {
+      stop(
+        "Error: Invalid 'Num_Rating' in the input data set. Zero (0) is not a valid numerical rating"
+      )
+    }
+    
+    if (anyNA(data)) {
+      stop("Error: Invalid values in the input data set. Correct any 'NA' in the dataframe ")
+    }
+    
+    if (method == "tnh") {
+      TotalDateRange <-
+        as.Date(chron::seq.dates(
+          format(as.Date(startDate), format = "%m/%d/%Y"),
+          format(as.Date(endDate), format = "%m/%d/%Y"),
+          by = "months"
+        ),
+        "%Y-%m-%d")
+      
+      lstCnt <- list()
       
       #initialize counters
       m <- 0
       k <- 0
       ratingCatgoriesCnt <- length(unique(data$Num_Ratings))
-      transMatI.prod <- diag(x=1,ratingCatgoriesCnt,ratingCatgoriesCnt)
+      transMatI.prod <-
+        diag(x = 1, ratingCatgoriesCnt, ratingCatgoriesCnt)
       
       
       #get transition counts and percentages
-      for (l in 1:(length(TotalDateRange)-1)){
-        
+      for (l in 1:(length(TotalDateRange) - 1)) {
         startDate  <- TotalDateRange[l]
-        endDate  <- TotalDateRange[l+1]
-
-        data1 <- data[data$Date>=startDate & data$Date<=endDate,]
+        endDate  <- TotalDateRange[l + 1]
         
-        if(nrow(data1)==0){
-          
+        data1 <- data[data$Date >= startDate & data$Date <= endDate, ]
+        
+        if (nrow(data1) == 0) {
           print("There is not enough data to estimate a Time non-Homogeneous Transition Matrix")
           
-        } else if (length(sort(as.character(unique(data1$Date)))) <2 ) {
+        } else if (length(sort(as.character(unique(data1$Date)))) < 2) {
+          print(
+            "There are no transitions in this sample. RTransProb cannot estimate a transition matrix via the 'tnh' method using this sample data."
+          )
           
-          print("There are no transitions in this sample. RTransProb cannot estimate a transition matrix via the 'tnh' method using this sample data.")
-
           
-        } else if ((sum(duplicated(data1$ID,data1$Rating)*1))<1) {  
+        } else if ((sum(duplicated(data1$ID, data1$Rating) * 1)) < 1) {
+          print(
+            "There are no transitions in this sample. RTransProb cannot estimate a transition matrix via the 'tnh' method using this sample data."
+          )
           
-          print("There are no transitions in this sample. RTransProb cannot estimate a transition matrix via the 'tnh' method using this sample data.")
-      
         } else {
-
-        data1 <- transform(data1,id2=seq(1:nrow(data1)))
-        keepVars   <-  c("id2","ID")
-        data_abridge <- data1[keepVars]
-        
-        
-        StartPos    <- data_abridge[ !duplicated(data_abridge$ID), ]
-        StartPos    <- StartPos[c("id2")]
-        
-        numericalRating = data1$Num_Ratings
-        labels2 = sort(as.character(unique(data1$Rating)));
-        
-        RatingsCat = length(sort(as.character(unique(data$Rating))))  
-        
-        numDate = POSIXTomatlab(as.POSIXlt(as.Date(data1$Date,format = "%m/%d/%Y")));  #Convert dates to POSIXITlt date format and then consequently to Matlab datenum dates
-        
-        
-        if (snapshots==0){
-          snapshots <- 1
-          interval <- 1
-        }
-        
-        if (startDate == 0){
-          sDate = min(as.Date(data1$Date,format = "%m/%d/%Y"))
-          sDate = POSIXTomatlab(as.POSIXlt(sDate))
-        } else {
-          sDate = POSIXTomatlab(as.POSIXlt(as.Date(startDate,format = "%Y-%m-%d")))
-        }
-        
-        if (endDate == 0){
-          eDate = max(as.Date(data1$Date,format = "%m/%d/%Y"))
-          eDate = POSIXTomatlab(as.POSIXlt(eDate))
-        } else {
-          eDate = POSIXTomatlab(as.POSIXlt(as.Date(endDate,format = "%Y-%m-%d")))
-        }
-        
-        if (sDate>eDate){
-          stop("Error: Start Date is Greater Than End Date")
-        }
-        
-        
-        #For 'tnh' we force the snapshots to be 12 because we are only concerned about 'month-to-month' transition.
-        snapshots <- 12
-        
-        # Get totals per ID
-        idTotCnt = getidTotCntCohort(numDate,numericalRating,StartPos,sDate,
-                                     eDate,RatingsCat, snapshots)
-        
-
-        # Get transition probabilities and sample totals
-        transMat_sampleTotals <- transitionprobbytotals(idTotCnt,snapshots,interval,method)
-        
-        transMatI <- transMat_sampleTotals$transMatI
-        transMatI.prod <- transMatI.prod %*% transMatI
-
-        lstCnt[[l]] <- transMatI.prod
-        
-          m <- m+1
-          if(m>snapshots){
-             m <- 1
-             k <- k+1
+          data1 <- transform(data1, id2 = seq(1:nrow(data1)))
+          keepVars   <-  c("id2", "ID")
+          data_abridge <- data1[keepVars]
           
-           }
-        
+          
+          StartPos    <- data_abridge[!duplicated(data_abridge$ID),]
+          StartPos    <- StartPos[c("id2")]
+          
+          numericalRating = data1$Num_Ratings
+          labels2 = sort(as.character(unique(data1$Rating)))
+          
+          
+          RatingsCat = length(sort(as.character(unique(
+            data$Rating
+          ))))
+          
+          numDate = POSIXTomatlab(as.POSIXlt(as.Date(data1$Date, format = "%m/%d/%Y")))
+          #Convert dates to POSIXITlt date format and then consequently to Matlab datenum dates
+          
+          
+          if (snapshots == 0) {
+            snapshots <- 1
+            interval <- 1
+          }
+          
+          if (startDate == 0) {
+            sDate = min(as.Date(data1$Date, format = "%m/%d/%Y"))
+            sDate = POSIXTomatlab(as.POSIXlt(sDate))
+          } else {
+            sDate = POSIXTomatlab(as.POSIXlt(as.Date(startDate, format = "%Y-%m-%d")))
+          }
+          
+          if (endDate == 0) {
+            eDate = max(as.Date(data1$Date, format = "%m/%d/%Y"))
+            eDate = POSIXTomatlab(as.POSIXlt(eDate))
+          } else {
+            eDate = POSIXTomatlab(as.POSIXlt(as.Date(endDate, format = "%Y-%m-%d")))
+          }
+          
+          if (sDate > eDate) {
+            stop("Error: Start Date is Greater Than End Date")
+          }
+          
+          
+          #For 'tnh' we force the snapshots to be 12 because we are only concerned about 'month-to-month' transition.
+          snapshots <- 12
+          
+          # Get totals per ID
+          idTotCnt = getidTotCntCohort(numDate,
+                                       numericalRating,
+                                       StartPos,
+                                       sDate,
+                                       eDate,
+                                       RatingsCat,
+                                       snapshots)
+          
+          
+          # Get transition probabilities and sample totals
+          transMat_sampleTotals <-
+            transitionprobbytotals(idTotCnt, snapshots, interval, method)
+          
+          transMatI <- transMat_sampleTotals$transMatI
+          transMatI.prod <- transMatI.prod %*% transMatI
+          
+          lstCnt[[l]] <- transMatI.prod
+          
+          m <- m + 1
+          if (m > snapshots) {
+            m <- 1
+            k <- k + 1
+            
+          }
+          
         }
-
+        
         rm(data1)
-
+        
       }
       
-
-       transMat_sampleTotals <- lstCnt
-    
-    
-
-  } else {
-    
-    data <- transform(data,id2=seq(1:nrow(data)))
-    keepVars   <-  c("id2","ID")
-    data_abridge <- data[keepVars]
-    data_abridge[nrow(data_abridge) + 1, ] <- c( (as.numeric(tail(data_abridge$id2,1)) +1), 0)
-    
-    StartPos    <- data_abridge[ !duplicated(data_abridge$ID), ]
-    StartPos    <- StartPos[c("id2")]
-
-    
-    numericalRating = data$Num_Ratings
-    labels2 = sort(as.character(unique(data$Rating)));
-    RatingsCat = length(sort(as.character(unique(data$Rating))))
-    
-    numDate = POSIXTomatlab(as.POSIXlt(as.Date(data$Date,format = "%m/%d/%Y")));  #Convert dates to POSIXITlt date format and then consequently to Matlab datenum dates
-    
-    if (snapshots==0){
-      snapshots <- 1
-      interval <- 1
-    }
-    
-    
-    if (startDate == 0){
-      sDate = min(as.Date(data$Date,format = "%m/%d/%Y"))
-      sDate = POSIXTomatlab(as.POSIXlt(sDate))
+      
+      transMat_sampleTotals <- lstCnt
+      
+      
+      
     } else {
-      sDate = POSIXTomatlab(as.POSIXlt(as.Date(startDate,format = "%Y-%m-%d")))
+      data <- transform(data, id2 = seq(1:nrow(data)))
+      keepVars   <-  c("id2", "ID")
+      data_abridge <- data[keepVars]
+      data_abridge[nrow(data_abridge) + 1,] <-
+        c((as.numeric(tail(
+          data_abridge$id2, 1
+        )) + 1), 0)
+      
+      StartPos    <- data_abridge[!duplicated(data_abridge$ID),]
+      StartPos    <- StartPos[c("id2")]
+      
+      
+      numericalRating = data$Num_Ratings
+      labels2 = sort(as.character(unique(data$Rating)))
+      
+      RatingsCat = length(sort(as.character(unique(data$Rating))))
+      
+      numDate = POSIXTomatlab(as.POSIXlt(as.Date(data$Date, format = "%m/%d/%Y")))
+      #Convert dates to POSIXITlt date format and then consequently to Matlab datenum dates
+      
+      if (snapshots == 0) {
+        snapshots <- 1
+        interval <- 1
+      }
+      
+      
+      if (startDate == 0) {
+        sDate = min(as.Date(data$Date, format = "%m/%d/%Y"))
+        sDate = POSIXTomatlab(as.POSIXlt(sDate))
+      } else {
+        sDate = POSIXTomatlab(as.POSIXlt(as.Date(startDate, format = "%Y-%m-%d")))
+      }
+      
+      if (endDate == 0) {
+        eDate = max(as.Date(data$Date, format = "%m/%d/%Y"))
+        eDate = POSIXTomatlab(as.POSIXlt(eDate))
+      } else {
+        eDate = POSIXTomatlab(as.POSIXlt(as.Date(endDate, format = "%Y-%m-%d")))
+      }
+      
+      if (sDate > eDate) {
+        stop("Error: Start Date is Greater Than End Date")
+      }
+      
+      
+      # Get totals per ID
+      if (method == "duration") {
+        idTotCnt = getidTotCntDuration(numDate,
+                                       numericalRating,
+                                       StartPos,
+                                       sDate,
+                                       eDate,
+                                       RatingsCat)
+      } else if (method == "cohort") {
+        idTotCnt = getidTotCntCohort(numDate,
+                                     numericalRating,
+                                     StartPos,
+                                     sDate,
+                                     eDate,
+                                     RatingsCat,
+                                     snapshots)
+      }
+      
+      
+      # Get transition probabilities and sample totals
+      transMat_sampleTotals <-
+        transitionprobbytotals(idTotCnt, snapshots, interval, method)
+      
+      
     }
     
-    if (endDate == 0){
-      eDate = max(as.Date(data$Date,format = "%m/%d/%Y"))
-      eDate = POSIXTomatlab(as.POSIXlt(eDate))
-    } else {
-      eDate = POSIXTomatlab(as.POSIXlt(as.Date(endDate,format = "%Y-%m-%d")))
-    }
-    
-    if (sDate>eDate){
-      stop("Error: Start Date is Greater Than End Date")
-    }
-    
-    
-    # Get totals per ID
-    if (method=="duration"){
-      idTotCnt = getidTotCntDuration(numDate,numericalRating,StartPos,sDate,
-                                     eDate,RatingsCat)
-    }else if (method=="cohort") {
-      idTotCnt = getidTotCntCohort(numDate,numericalRating,StartPos,sDate,
-                                   eDate,RatingsCat, snapshots)
-    }
-    
-    
-    # Get transition probabilities and sample totals
-    transMat_sampleTotals <- transitionprobbytotals(idTotCnt,snapshots,interval,method)
-    
-    
+    return(transMat_sampleTotals)
   }
-
-  return(transMat_sampleTotals)
-}
 

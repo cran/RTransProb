@@ -19,83 +19,93 @@
 #'
 #' @author  Abdoulaye (Ab) N'Diaye
 #'
-VecOfTransData<-function(lstCnt,ratingCat, startDate,endDate,snapshots){
-
-  df <- data.frame(industryName=character(),
-                   Qtr_Year =character(),
-                   endDate = as.Date(character()),
-                   Rating_Trans = character(),
-                   start_Rating = character(),
-                   end_rating = character(),
-                   mCount = integer(),
-                   stringsAsFactors = FALSE)
-
-  
-  if (snapshots == 1){
-    snaps = "years"
-  } else if (snapshots == 4){
-    snaps = "quarters"
-  } else if (snapshots == 12){
-    snaps = "months"
-  }
-  
-  TotalDateRange <- seq.Date(as.Date(startDate), as.Date(endDate), snaps)
-
-  #initialize counters
-  nn <- 1
-  k <- 1
-  r <- 1
-
-  TRows <- ratingCat
-  TCols <- ratingCat
-
-  #now create transitions table
-  for (l in 1:(length(TotalDateRange)-1)){
-
-    #istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "%Y-%m-%d")))
-    #iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "%Y-%m-%d")))
-    #DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
-
-    #for(i in 1:(length(DateRange)-1)){
-
+VecOfTransData <-
+  function(lstCnt,
+           ratingCat,
+           startDate,
+           endDate,
+           snapshots) {
+    df <- data.frame(
+      industryName = character(),
+      Qtr_Year = character(),
+      endDate = as.Date(character()),
+      Rating_Trans = character(),
+      start_Rating = character(),
+      end_rating = character(),
+      mCount = integer(),
+      stringsAsFactors = FALSE
+    )
+    
+    
+    if (snapshots == 1) {
+      snaps = "years"
+    } else if (snapshots == 4) {
+      snaps = "quarters"
+    } else if (snapshots == 12) {
+      snaps = "months"
+    }
+    
+    
+    TotalDateRange <-
+      seq(as.Date(startDate), as.Date(endDate), snaps) - 1
+    #TotalDateRange <- seq.Date(as.Date(startDate), as.Date(endDate), snaps)
+    
+    #initialize counters
+    nn <- 1
+    k <- 1
+    r <- 1
+    
+    TRows <- ratingCat
+    TCols <- ratingCat
+    
+    #now create transitions table
+    for (l in 1:(length(TotalDateRange) - 1)) {
+      #istartDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l],format = "%Y-%m-%d")))
+      #iendDate = POSIXTomatlab(as.POSIXlt(as.Date(TotalDateRange[l+1],format = "%Y-%m-%d")))
+      #DateRange        <- as.Date(matlabToPOSIX(cfdates(istartDate,iendDate,snapshots)))
+      
+      #for(i in 1:(length(DateRange)-1)){
+      
       startDate  <- TotalDateRange[l]
-      endDate    <- TotalDateRange[l+1]
-
+      endDate    <- TotalDateRange[l + 1]
+      
       getRowCOunt <- nrow(lstCnt[[k]][[nn]])
-
+      
       #Transpose the matrix before looping through it
       cntMatrix <- t(lstCnt[[k]][[nn]])
-
+      
       c <- 1
-
-      for (gcols in 1:getRowCOunt){
-        for (grows in 1:getRowCOunt){
-          df[r,1] <- "X"
-          df[r,2] <- paste(as.character(chron::years(TotalDateRange[l])) ,quarters(TotalDateRange[l]),sep=" ")
-          df[r,3] <- TotalDateRange[l+1]
-          df[r,4] <- paste(TCols[gcols], "-", TRows[grows], sep="")
-          df[r,5] <- TCols[gcols]
-          df[r,6] <- TRows[grows]
-          df[r,7] <- cntMatrix[c]
-
-          c <- c+1
-          r <- r +1
+      
+      for (gcols in 1:getRowCOunt) {
+        for (grows in 1:getRowCOunt) {
+          df[r, 1] <- "X"
+          df[r, 2] <-
+            paste(as.character(chron::years(TotalDateRange[l])) ,
+                  quarters(TotalDateRange[l]),
+                  sep = " ")
+          df[r, 3] <- TotalDateRange[l + 1]
+          df[r, 4] <- paste(TCols[gcols], "-", TRows[grows], sep = "")
+          df[r, 5] <- TCols[gcols]
+          df[r, 6] <- TRows[grows]
+          df[r, 7] <- cntMatrix[c]
+          
+          c <- c + 1
+          r <- r + 1
         }
       }
-
-
-      nn <- nn+1
-
-      if(nn>snapshots){
+      
+      
+      nn <- nn + 1
+      
+      if (nn > snapshots) {
         nn <- 1
-        k <- k+1
+        k <- k + 1
       }
-
-    #}
-
+      
+      
+    }
+    
+    transData <- df
+    return(transData)
   }
-
-  transData <- df
-  return(transData)
-}
 

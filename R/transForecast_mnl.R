@@ -42,93 +42,193 @@
 #'
 #' @examples
 #' \dontrun{
-#' mnl_TM<-transForecast_mnl(data, histData, predData_mnl, startDate, endDate, method, interval,  
-#'                          snapshots, defind, ref, depVar,indVars, ratingCat, wgt)
+#' 
+#' library(dplyr)
+#' library(plyr)
+#' library(Matrix)
+#' 
+#' 
+#' 
+#' 
+#' for (i in c(24, 25, 26, 27)) {
+#'   data <- data
+#'   
+#'   histData <- histData
+#'   
+#'   
+#'   predData_mnl2 <- predData_mnl
+#'   predData_mnl2 <- subset(
+#'     predData_mnl,
+#'     X == i,
+#'     select = c(
+#'       X3.month.Treasury.rate.Lag.Q4,
+#'       Unemployment.....YoY.RelChng.Lag.Q2,
+#'       Industrial.Production,
+#'       Prime.rate.YoY.RelChng,
+#'       D_B,
+#'       D_C,
+#'       D_D,
+#'       D_E,
+#'       D_F,
+#'       D_G
+#'     )
+#'   )
+#'   indVars   = c(
+#'     "X3.month.Treasury.rate.Lag.Q4",
+#'     "Unemployment.....YoY.RelChng.Lag.Q2",
+#'     "Industrial.Production",
+#'     "Prime.rate.YoY.RelChng"
+#'   )
+#'   
+#'   
+#'   startDate = "1991-08-16"
+#'   endDate   = "2007-08-16"
+#'   method    = "cohort"
+#'   snapshots = 1
+#'   interval  = 1
+#'   ref       = 'A'
+#'   depVar    = c("end_rating")
+#'   ratingCat = c("A", "B", "C", "D", "E", "F", "G", "N")
+#'   defind    = "N"
+#'   wgt       = "mCount"
+#'   
+#'   
+#'   
+#'   transForecast_mnl_out <-
+#'     transForecast_mnl(
+#'       data,
+#'       histData,
+#'       predData_mnl2,
+#'       startDate,
+#'       endDate,
+#'       method,
+#'       interval,
+#'       snapshots,
+#'       defind,
+#'       ref,
+#'       depVar,
+#'       indVars,
+#'       ratingCat,
+#'       wgt
+#'     )
+#'   output <- transForecast_mnl_out$mnl_Predict
+#'   print(output)
+#'   
+#'  }
+#'  
 #' }
 #'
 #'
-transForecast_mnl <- function (data,histData, predData_mnl, startDate, endDate, method, interval, snapshots, defind, ref,depVar,indVars, ratingCat, wgt){
-                                  
-  if (snapshots == 1){
-    snaps = "years"
-  } else if (snapshots == 4){
-    snaps = "quarters"
-  } else if (snapshots == 12){
-    snaps = "months"
-  }
-  
-  #Set parameters
-  startDate  <- startDate   
-  endDate    <- endDate     
-  TotalDateRange <- seq(as.Date(startDate), as.Date(endDate), snaps)
-  
-  snapshots <- snapshots  
-  interval <- interval     
-  AnnualBlock <- as.integer(as.numeric(as.Date(endDate)-as.Date(startDate))/365)+1   
-  
-  lstCnt <-rep(list(list()), AnnualBlock)
-  lstInit <-rep(list(list()), AnnualBlock)
-  lstPct <-rep(list(list()), AnnualBlock)
-  
-  #initialize counters
-  n <- 1
-  k <- 1
-  
-  #get transition counts and percentages
-  for (l in 1:(length(TotalDateRange)-1)){
-
-
-    if(l==85){
-      s="l"
+transForecast_mnl <-
+  function (data,
+            histData,
+            predData_mnl,
+            startDate,
+            endDate,
+            method,
+            interval,
+            snapshots,
+            defind,
+            ref,
+            depVar,
+            indVars,
+            ratingCat,
+            wgt) {
+    if (snapshots == 1) {
+      snaps = "years"
+    } else if (snapshots == 4) {
+      snaps = "quarters"
+    } else if (snapshots == 12) {
+      snaps = "months"
     }
+    
+    #Set parameters
+    startDate  <- startDate
+    endDate    <- endDate
+    TotalDateRange <- seq(as.Date(startDate), as.Date(endDate), snaps)
+    
+    snapshots <- snapshots
+    interval <- interval
+    AnnualBlock <-
+      as.integer(as.numeric(as.Date(endDate) - as.Date(startDate)) / 365) + 1
+    
+    lstCnt <- rep(list(list()), AnnualBlock)
+    lstInit <- rep(list(list()), AnnualBlock)
+    lstPct <- rep(list(list()), AnnualBlock)
+    
+    #initialize counters
+    n <- 1
+    k <- 1
+    
+    #get transition counts and percentages
+    for (l in 1:(length(TotalDateRange) - 1)) {
+      if (l == 85) {
+        s = "l"
+      }
       
       sDate  <- TotalDateRange[l]
-      eDate  <- TotalDateRange[l+1]
-      Example1<-TransitionProb(data,sDate, eDate, method, snapshots, interval)
-      lstCnt[[k]][[n]] <- Example1$sampleTotals$totalsMat #list of quarterly transition counts
-      lstInit[[k]][[n]] <- Example1$sampleTotals$totalsVec #list of annual initial counts
+      eDate  <- TotalDateRange[l + 1]
+      Example1 <-
+        TransitionProb(data, sDate, eDate, method, snapshots, interval)
+      lstCnt[[k]][[n]] <-
+        Example1$sampleTotals$totalsMat #list of quarterly transition counts
+      lstInit[[k]][[n]] <-
+        Example1$sampleTotals$totalsVec #list of annual initial counts
       
-
-      A<-as.data.frame(lstCnt[[k]][[n]])
-      B<-as.data.frame(lstInit[[k]][[n]])
-      lstPct[[k]][[n]]   <- A/t(B)
-
-      n <- n+1
-      if(n>snapshots){
+      
+      A <- as.data.frame(lstCnt[[k]][[n]])
+      B <- as.data.frame(lstInit[[k]][[n]])
+      lstPct[[k]][[n]]   <- A / t(B)
+      
+      n <- n + 1
+      if (n > snapshots) {
         n <- 1
-        k <- k+1
+        k <- k + 1
       }
+    }
+    
+    
+    # -------------------------------- Multinomial Logistic -----------------------------------------------------------
+    
+    startDate <- as.Date(startDate)
+    endDate <-  as.Date(endDate)
+    
+    
+    ratingCat <- ratingCat
+    transition_data_compressed_m <-
+      VecOfTransData(lstCnt, ratingCat, startDate, endDate, snapshots)
+    
+    
+    #3) Construct parameters for MNL model
+    transition_data_compressed_m <-
+      transition_data_compressed_m[which(transition_data_compressed_m$start_Rating !=
+                                           tail(ratingCat, n = 1)),]
+    
+    
+    ref <- ref
+    depVar <- depVar
+    indVars <- indVars
+    wgt <-  "mCount"
+    ratingCat <- ratingCat[ratingCat != defind]
+    histData  <- histData       #historical macro variables
+    predData_mnl <-
+      predData_mnl     #prediction data along with the dummy values for the buckets
+    
+    
+    #4) run mnl model
+    mnl_T <-
+      forecast_mnl(
+        transition_data_compressed_m,
+        histData,
+        predData_mnl,
+        startDate,
+        endDate,
+        ref,
+        depVar,
+        indVars,
+        ratingCat,
+        wgt
+      )
+    
+    return (mnl_T)
   }
-  
-  
-  # -------------------------------- Multinomial Logistic -----------------------------------------------------------
-  
-  startDate <-as.Date(startDate)      
-  endDate <-  as.Date(endDate)        
-  
-  
-  ratingCat <- ratingCat              
-  transition_data_compressed_m <- VecOfTransData(lstCnt,ratingCat,startDate,endDate,snapshots)
-  
-  
-  #3) Construct parameters for MNL model
-  transition_data_compressed_m <- transition_data_compressed_m[ which(transition_data_compressed_m$start_Rating!=tail(ratingCat, n=1)), ]
-  
-  
-  ref <- ref   #"A"
-  depVar <- depVar   #c("end_rating")
-  indVars <- indVars #c("Macro1", "Financial1","Industry1")
-  wgt <-  "mCount"
-  ratingCat <- ratingCat[ratingCat != defind]    
-  histData  <-histData       #historical macro variables
-  predData_mnl<-predData_mnl     #prediction data along with the dummy values for the buckets
-  
-  
-  #4) run mnl model
-  mnl_T<-forecast_mnl(transition_data_compressed_m, histData, predData_mnl, startDate, endDate, ref, depVar, indVars, ratingCat, wgt)
-  
-  return (mnl_T)
-}
-
-
-

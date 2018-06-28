@@ -21,89 +21,104 @@
 #' @author  Abdoulaye (Ab) N'Diaye
 #'
 
-transitionprobbytotals <- function(idTotCnt,snapshots,interval,method){
-
-
-  totals = idTotCnt
-  rm(idTotCnt)
-  gc()
-  snapshots = snapshots
-  interval = interval
-  
-  
-  #==================================================================
-  
-  rows_cols <- sqrt(lengths(totals$totalsMat[1]))
-  cubelength    <- length(totals$totalsMat)
-
-
-  totals_totalsMat <- array(totals$totalsMat, dim=c(rows_cols,rows_cols,cubelength))
-  totals_totalsVec <- array(totals$totalsVec, dim=c(rows_cols,1,cubelength))
-  totals_method   <- array(unlist(totals$method))
-  slices <- length(totals_totalsVec)
-
-  sampleTotals = getSampleTotals(totals_totalsMat,totals_totalsVec,totals_method[1],cubelength, rows_cols,rows_cols);
-
-  rm(totals_totalsMat)
-  rm(totals_totalsVec)
-  rm(totals)
-  gc()
-  
-  #==================================================================/
-
-
-  sampleTotals$totalsVec<-as.vector(sampleTotals$totalsVec)
-  sampleTotals$totalsMat<-as.matrix(sampleTotals$totalsMat)
-  transMat1= getTransitionProbability(sampleTotals$totalsMat,sampleTotals$totalsVec,sampleTotals$method,snapshots,interval);
-
-  
-  if(method == "tnh"){
-
-    if (snapshots!=1 || interval!=1){
-      transMat1$transMat <- expm::`%^%`(transMat1$transMat,(snapshots*interval))
+transitionprobbytotals <-
+  function(idTotCnt, snapshots, interval, method) {
+    totals = idTotCnt
+    rm(idTotCnt)
+    gc()
+    snapshots = snapshots
+    interval = interval
+    
+    
+    #==================================================================
+    
+    rows_cols <- sqrt(lengths(totals$totalsMat[1]))
+    cubelength    <- length(totals$totalsMat)
+    
+    
+    totals_totalsMat <-
+      array(totals$totalsMat, dim = c(rows_cols, rows_cols, cubelength))
+    totals_totalsVec <-
+      array(totals$totalsVec, dim = c(rows_cols, 1, cubelength))
+    totals_method   <- array(unlist(totals$method))
+    slices <- length(totals_totalsVec)
+    
+    sampleTotals = getSampleTotals(
+      totals_totalsMat,
+      totals_totalsVec,
+      totals_method[1],
+      cubelength,
+      rows_cols,
+      rows_cols
+    )
+    
+    
+    rm(totals_totalsMat)
+    rm(totals_totalsVec)
+    rm(totals)
+    gc()
+    
+    #==================================================================/
+    
+    
+    sampleTotals$totalsVec <- as.vector(sampleTotals$totalsVec)
+    sampleTotals$totalsMat <- as.matrix(sampleTotals$totalsMat)
+    transMat1 = getTransitionProbability(
+      sampleTotals$totalsMat,
+      sampleTotals$totalsVec,
+      sampleTotals$method,
+      snapshots,
+      interval
+    )
+    
+    
+    
+    if (method == "tnh") {
+      if (snapshots != 1 || interval != 1) {
+        transMat1$transMat <-
+          expm::`%^%`(transMat1$transMat, (snapshots * interval))
+      }
+      
+      
+    } else if (method == "cohort") {
+      if (snapshots != 1 || interval != 1) {
+        transMat1$transMat <-
+          expm::`%^%`(transMat1$transMat, (snapshots * interval))
+      }
+      
     }
     
     
-  } else if(method == "cohort"){
-
-    if (snapshots!=1 || interval!=1){
-      transMat1$transMat <- expm::`%^%`(transMat1$transMat,(snapshots*interval))
-    } 
+    transMat1$transMat <- 100 * transMat1$transMat
+    transMat = transMat1$transMat
+    
+    
+    if (method == "tnh") {
+      diag(transMat) <- 0
+      diag(transMat) <- -rowSums(transMat)
+      getI <- diag(x = 1, nrow(transMat), ncol(transMat))
+      transMatI <- getI + (transMat / 100)
+    }
+    
+    
+    
+    if (method == "duration") {
+      genMat = transMat1$genMat
+    }
+    
+    if (method == "cohort") {
+      probbytotals <- list(sampleTotals = sampleTotals,
+                           transMat = transMat)
+    } else if (method == "duration") {
+      probbytotals <- list(sampleTotals = sampleTotals,
+                           transMat = transMat,
+                           genMat = genMat)
+    } else if (method == "tnh") {
+      probbytotals <- list(transMat = transMat,
+                           transMatI = transMatI)
+    }
+    
+    
+    return(probbytotals)
     
   }
-  
-  
-  transMat1$transMat <- 100*transMat1$transMat
-  transMat = transMat1$transMat
-  
-  
-  if(method == "tnh"){
-    diag(transMat) <- 0 
-    diag(transMat) <- -rowSums(transMat) 
-    getI <- diag(x = 1, nrow(transMat), ncol(transMat))
-    transMatI <- getI + (transMat/100)
-  }
-  
-  
-  
-  if(method == "duration"){  
-     genMat = transMat1$genMat
-   }
-  
-  if(method == "cohort"){
-    probbytotals <- list(sampleTotals=sampleTotals,
-                         transMat=transMat)
-  } else if (method == "duration"){
-    probbytotals <- list(sampleTotals=sampleTotals,
-                         transMat=transMat,
-                         genMat = genMat)
-  } else if (method == "tnh"){
-    probbytotals <- list(transMat=transMat,
-                         transMatI=transMatI)
-  }
-  
-
-  return(probbytotals)
-
-}
-

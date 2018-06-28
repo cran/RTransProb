@@ -1,13 +1,14 @@
-#' Forecast - using Linear Discriminant Analysis
+#' Forecast - using Artificial Neural Networks
 #'
-#' @description This model implements a forecasting method using Linear Discriminant Analysis.
+#' @description This model implements a forecasting method using Artificial Neural Networks.
 #'
-#' @usage transForecast_lda(data, histData, predData_lda, startDate, endDate, method,
-#'                          interval, snapshots, defind, depVar, indVars, pct, ratingCat)
+#' @usage transForecast_ann(data, histData, predData_ann, startDate, endDate,
+#'                     method, interval, snapshots, defind, depVar, indVars,  ratingCat, 
+#'                     pct, hiddenlayers,activation,stepMax,rept, calibration)
 #'
 #' @param data a table containing historical credit ratings data (i.e., credit migration data). A dataframe of size \emph{nRecords} x 3 where each row contains an ID (column 1), a date (column 2), and a credit rating (column 3); The credit rating is the rating assigned to the corresponding ID on the corresponding date.
 #' @param histData historical macroeconomic,financial and non-financial data.
-#' @param predData_lda forecasting data.
+#' @param predData_ann forecasting data.
 #' @param startDate start date of the estimation time window, in string or numeric format.
 #' @param endDate end date of the estimation time window, in string or numeric format.
 #' @param method  estimation algorithm, in string format. Valid values are 'duration'  or 'cohort'.
@@ -16,18 +17,24 @@
 #' @param defind Default Indicator
 #' @param depVar dependent variable, as a string.
 #' @param indVars list containing the independent variables.
-#' @param pct percent of data used in training dataset.
 #' @param ratingCat list containing the unique rating caetgories
+#' @param pct percent of data used in training dataset.
+#' @param hiddenlayers a vector of integers specifying the number of hidden neurons (vertices) in each layer.
+#' @param activation activation function. strings, 'logistic' and 'tanh' are possible for the logistic function and tangent hyperbolicus
+#' @param stepMax the maximum steps for the training of the neural network. Reaching this maximum leads to a stop of the neural network's training process.
+#' @param calibration determines if code uses the caret package to find optimal parameter. 'Yes' and 'No'
+#' @param rept the number of repetitions for the neural network's training.
 #'
-#' @return The output consists of a forecasted transition matrix.
+#' @return The output consists of a forecasted transition matrix using ANN.
 #'
 #' @export
 #'
 #' @author  Abdoulaye (Ab) N'Diaye
 #'
+#'
+#'
 #' @examples
 #' \dontrun{
-#' 
 #' library(dplyr)
 #' library(plyr)
 #' library(Matrix)
@@ -37,11 +44,13 @@
 #'   data <- data
 #'   
 #'   histData <- histData.normz
+#'   names(histData)[names(histData) == 'X3.month.Treasury.rate.normz.Lag.Q4'] <-
+#'     'T3.month.Treasury.rate.normz.Lag.Q4'
 #'   
 #'   
-#'   predData_lda2 <- predData_lda
-#'   predData_lda2 <- subset(
-#'     predData_lda2,
+#'   predData_ann2 <- predData_ann
+#'   predData_ann2 <- subset(
+#'     predData_ann2,
 #'     X == i,
 #'     select = c(
 #'       X3.month.Treasury.rate.normz.Lag.Q4,
@@ -50,11 +59,12 @@
 #'     )
 #'   )
 #'   indVars   = c(
-#'     "X3.month.Treasury.rate.normz.Lag.Q4",
+#'     "T3.month.Treasury.rate.normz.Lag.Q4",
 #'     "Unemployment.....normz.YoY.AbsChng.Lag.Q2",
 #'     "GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2"
 #'   )
-#'   
+#'   names(predData_ann2)[names(predData_ann2) == 'X3.month.Treasury.rate.normz.Lag.Q4'] <-
+#'     'T3.month.Treasury.rate.normz.Lag.Q4'
 #'   
 #'   
 #'   startDate = "1991-08-16"
@@ -62,20 +72,37 @@
 #'   
 #'   
 #'   depVar <- c("end_rating")
+#'   
 #'   pct <- 1
 #'   wgt <-  "mCount"
 #'   ratingCat <- c("A", "B", "C", "D", "E", "F", "G")
 #'   defind    <- "G"
+#'   
+#'   
+#'   ratingCat <- as.numeric(factor(
+#'     ratingCat,
+#'     levels = c('A', 'B', 'C', 'D', 'E', 'F', 'G'),
+#'     labels = c(1, 2, 3, 4, 5, 6, 7)
+#'   ))
+#'   defind <- as.numeric(factor(
+#'     defind,
+#'     levels = c('A', 'B', 'C', 'D', 'E', 'F', 'G'),
+#'     labels = c(1, 2, 3, 4, 5, 6, 7)
+#'   ))
+#'   
 #'   method    = "cohort"
 #'   snapshots = 1
 #'   interval  = 1
+#'   hiddenlayers = c(1)
+#'   activation = "logistic"
+#'   stepMax = 1e9                #increase to make sure the DNN converges
+#'   calibration = "FALSE"
 #'   
-#'   
-#'   lda_TM <-
-#'     transForecast_lda(
+#'   ann_TM <-
+#'     transForecast_ann(
 #'       data,
 #'       histData,
-#'       predData_lda2,
+#'       predData_ann2,
 #'       startDate,
 #'       endDate,
 #'       method,
@@ -84,21 +111,22 @@
 #'       defind,
 #'       depVar,
 #'       indVars,
+#'       ratingCat,
 #'       pct,
-#'       ratingCat
+#'       hiddenlayers,
+#'       activation,
+#'       stepMax,
+#'       calibration
 #'     )
-#'   print(lda_TM)
+#'   print(ann_TM)
 #'   
 #' }
-#' 
 #'}
-
-
-
-transForecast_lda <-
+#'
+transForecast_ann <-
   function(data,
            histData,
-           predData_lda,
+           predData_ann,
            startDate,
            endDate,
            method,
@@ -107,8 +135,13 @@ transForecast_lda <-
            defind,
            depVar,
            indVars,
+           ratingCat,
            pct,
-           ratingCat) {
+           hiddenlayers,
+           activation,
+           stepMax,
+           rept,
+           calibration) {
     if (snapshots == 1) {
       snaps = "years"
     } else if (snapshots == 4) {
@@ -161,9 +194,9 @@ transForecast_lda <-
     
     
     
-    #extract the aggregate transition counts by date and transition type (i.e, AAA to AA,
+    #(3) extract the aggregate transition counts by date and transition type (i.e, AAA to AA,
     #    AAA to A, AAA to BBB, etc...)
-    ratingCat <- ratingCat
+    ratingCat <- ratingCat   #c("A","B", "C", "D", "E", "F", "G", "N")
     df <- VecOfTransData(lstCnt, ratingCat, startDate, endDate, snapshots)
     df <-
       subset(df, df[["start_Rating"]] != defind) #Notes: remove any record having a default
@@ -178,20 +211,31 @@ transForecast_lda <-
     wgt <-  wgt
     ratingCat <- ratingCat
     
+    transData$start_Rating <-
+      as.numeric(as.character(transData$start_Rating))
     
-    lda_T <-
-      forecast_lda(
+    transData$end_rating <-
+      as.numeric(as.character(transData$end_rating))
+    
+    ann_T <-
+      forecast_ann(
         transData,
         histData,
-        predData_lda,
+        predData_ann,
         startDate,
         endDate,
         depVar,
         indVars,
+        ratingCat,
         pct,
-        ratingCat
+        hiddenlayers,
+        activation,
+        stepMax,
+        calibration
       )
-    return(lda_T)
+    
+    return(ann_T)
     
     
   }
+

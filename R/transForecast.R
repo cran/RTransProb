@@ -63,120 +63,152 @@
 #' Example10 <- transForecast(Example9.1, isGenerator, creditIndex)
 #' }
 #'
-transForecast <- function(genMat,isGenerator, creditIndex){
-
-
-  
-  if (isGenerator=="Yes"){   #use generator
-      Lambda <- genMat
-
-      # correct diagonal
-      D <- rep(0,dim(Lambda)[2])
-      diag(Lambda) <- D
-      rowsums <- apply(Lambda,1,sum)
-      diag(Lambda) <- -rowsums
-
-      transMat = expm::expm(Lambda)
-      apply(transMat,1,sum)
-  
+transForecast <- function(genMat, isGenerator, creditIndex) {
+  if (isGenerator == "Yes") {
+    #use generator
+    Lambda <- genMat
+    
+    # correct diagonal
+    D <- rep(0, dim(Lambda)[2])
+    diag(Lambda) <- D
+    rowsums <- apply(Lambda, 1, sum)
+    diag(Lambda) <- -rowsums
+    
+    transMat = expm::expm(Lambda)
+    apply(transMat, 1, sum)
+    
   } else {
-  
     transMat = genMat
-}
-
+  }
+  
   #graph the thresholds prior to forecasting
-
-  transMat2 <- transMat[nrow(genMat):1,ncol(genMat):1]
-  transMat2 <- transMat2[-1,]
-
-  cumprobs <- t(apply(transMat2,1,function(v){cumsum(v)}))
+  
+  transMat2 <- transMat[nrow(genMat):1, ncol(genMat):1]
+  transMat2 <- transMat2[-1, ]
+  
+  cumprobs <- t(apply(transMat2, 1, function(v) {
+    cumsum(v)
+  }))
   cumprobs
-  thresholds<-stats::qnorm(cumprobs)
+  thresholds <- stats::qnorm(cumprobs)
   thresholds
-
-  opa <- graphics::par(mfrow=c(2,4))
+  
+  opa <- graphics::par(mfrow = c(2, 4))
   for (j in 1:nrow(thresholds))
   {
-    graphics::plot(seq(from=-5,to=5,length=100),stats::dnorm(seq(from=-5,to=5,length=100)),type="l",
-                   xlab="X",ylab="density",main=rownames(thresholds)[j])
-    graphics::abline(v=thresholds[j,],col=1:length(thresholds[j,]))
+    graphics::plot(
+      seq(
+        from = -5,
+        to = 5,
+        length = 100
+      ),
+      stats::dnorm(seq(
+        from = -5,
+        to = 5,
+        length = 100
+      )),
+      type = "l",
+      xlab = "X",
+      ylab = "density",
+      main = rownames(thresholds)[j]
+    )
+    graphics::abline(v = thresholds[j, ], col = 1:length(thresholds[j, ]))
   }
   graphics::par(opa)
-
-
-
+  
+  
+  
   ## Now to perform the forecasting of the transition matrix
-
-
+  
+  
   #DO NOT Flip the states . . .
-  transMat3<- transMat
-
+  transMat3 <- transMat
+  
   #for each loop get the row corresponding to the loop number get the cummulative probability of each
   #row (add up each cell starting from the first cell). . .
   #  . . .  get the inverse normal distribution for each cummulative probability (each cell) of each  row
-  cumprobs_threshold <- matrix(transMat3, nrow =nrow(genMat), ncol = ncol(genMat))
-
-  for (i in 1:dim(transMat3)[1]){
-
-    for (j in dim(transMat3)[2]:1){
-
-      cumprobs_threshold[i,j] <- stats::qnorm(sum(transMat3[i,j:dim(transMat3)[2]]))
-
+  cumprobs_threshold <-
+    matrix(transMat3,
+           nrow = nrow(genMat),
+           ncol = ncol(genMat))
+  
+  for (i in 1:dim(transMat3)[1]) {
+    for (j in dim(transMat3)[2]:1) {
+      cumprobs_threshold[i, j] <-
+        stats::qnorm(sum(transMat3[i, j:dim(transMat3)[2]]))
+      
     }
-
+    
   }
-
-  cumprobs_threshold[,1] <- 0
-
+  
+  cumprobs_threshold[, 1] <- 0
+  
   thresholds_frcast_final <- cumprobs_threshold
-  for (i in 1:dim(thresholds_frcast_final)[1]){
-
-    for (j in dim(thresholds_frcast_final)[2]:1){
-
-      if(j==dim(thresholds_frcast_final)[2]){
-        t <- stats::pnorm(as.numeric(cumprobs_threshold[i,j])-creditIndex)
-        thresholds_frcast_final[i,j] <-t
+  for (i in 1:dim(thresholds_frcast_final)[1]) {
+    for (j in dim(thresholds_frcast_final)[2]:1) {
+      if (j == dim(thresholds_frcast_final)[2]) {
+        t <- stats::pnorm(as.numeric(cumprobs_threshold[i, j]) - creditIndex)
+        thresholds_frcast_final[i, j] <- t
         
-      } else if (j==1) {
-
-        t <- 1- sum(as.numeric(thresholds_frcast_final[i,j:dim(thresholds_frcast_final)[2]]))
-        thresholds_frcast_final[i,j] <-t
-
-
+      } else if (j == 1) {
+        t <-
+          1 - sum(as.numeric(thresholds_frcast_final[i, j:dim(thresholds_frcast_final)[2]]))
+        thresholds_frcast_final[i, j] <- t
+        
+        
       } else {
-        j_start <- j+1
-        t <- stats::pnorm(as.numeric(cumprobs_threshold[i,j])-creditIndex) - sum(as.numeric(thresholds_frcast_final[i,j_start:dim(thresholds_frcast_final)[2]]))
-        thresholds_frcast_final[i,j] <-t
+        j_start <- j + 1
+        t <-
+          stats::pnorm(as.numeric(cumprobs_threshold[i, j]) - creditIndex) - sum(as.numeric(thresholds_frcast_final[i, j_start:dim(thresholds_frcast_final)[2]]))
+        thresholds_frcast_final[i, j] <- t
         
       }
-
-
+      
+      
     }
-
+    
   }
-
-
-
+  
+  
+  
   #graph the thresholds after forecasting
-  thresholds_frcast_final2 <- thresholds_frcast_final[nrow(genMat):1,ncol(genMat):1]
-  thresholds_frcast_final2 <- thresholds_frcast_final2[-1,]
-
-  cumprobs2 <- t(apply(thresholds_frcast_final2,1,function(v){cumsum(v)}))
+  thresholds_frcast_final2 <-
+    thresholds_frcast_final[nrow(genMat):1, ncol(genMat):1]
+  thresholds_frcast_final2 <- thresholds_frcast_final2[-1, ]
+  
+  cumprobs2 <-
+    t(apply(thresholds_frcast_final2, 1, function(v) {
+      cumsum(v)
+    }))
   cumprobs2
-  thresholds2<-stats::qnorm(cumprobs2)
+  thresholds2 <- stats::qnorm(cumprobs2)
   thresholds2
-
-  opa <- graphics::par(mfrow=c(2,4))
+  
+  opa <- graphics::par(mfrow = c(2, 4))
   for (j in 1:nrow(thresholds2))
   {
-    graphics::plot(seq(from=-5,to=5,length=100),stats::dnorm(seq(from=-5,to=5,length=100)),type="l",
-                   xlab="X",ylab="density",main=rownames(thresholds2)[j])
-    graphics::abline(v=thresholds2[j,],col=1:length(thresholds2[j,]))
+    graphics::plot(
+      seq(
+        from = -5,
+        to = 5,
+        length = 100
+      ),
+      stats::dnorm(seq(
+        from = -5,
+        to = 5,
+        length = 100
+      )),
+      type = "l",
+      xlab = "X",
+      ylab = "density",
+      main = rownames(thresholds2)[j]
+    )
+    graphics::abline(v = thresholds2[j, ], col = 1:length(thresholds2[j, ]))
   }
   graphics::par(opa)
-
-
+  
+  
   return(thresholds_frcast_final)
-
+  
 }
 
