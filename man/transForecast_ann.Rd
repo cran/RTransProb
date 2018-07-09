@@ -31,7 +31,7 @@ transForecast_ann(data, histData, predData_ann, startDate, endDate,
 
 \item{indVars}{list containing the independent variables.}
 
-\item{ratingCat}{list containing the unique rating caetgories}
+\item{ratingCat}{list containing the unique rating categories}
 
 \item{pct}{percent of data used in training dataset.}
 
@@ -58,89 +58,85 @@ library(plyr)
 library(Matrix)
 
 
-for (i in c(24, 25, 26, 27)) {
-  data <- data
-  
-  histData <- histData.normz
-  names(histData)[names(histData) == 'X3.month.Treasury.rate.normz.Lag.Q4'] <-
-    'T3.month.Treasury.rate.normz.Lag.Q4'
-  
-  
-  predData_ann2 <- predData_ann
-  predData_ann2 <- subset(
-    predData_ann2,
-    X == i,
-    select = c(
-      X3.month.Treasury.rate.normz.Lag.Q4,
-      Unemployment.....normz.YoY.AbsChng.Lag.Q2,
-      GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2
-    )
-  )
-  indVars   = c(
-    "T3.month.Treasury.rate.normz.Lag.Q4",
-    "Unemployment.....normz.YoY.AbsChng.Lag.Q2",
-    "GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2"
-  )
-  names(predData_ann2)[names(predData_ann2) == 'X3.month.Treasury.rate.normz.Lag.Q4'] <-
-    'T3.month.Treasury.rate.normz.Lag.Q4'
-  
-  
-  startDate = "1991-08-16"
-  endDate   = "2007-08-16"
-  
-  
-  depVar <- c("end_rating")
-  
-  pct <- 1
-  wgt <-  "mCount"
-  ratingCat <- c("A", "B", "C", "D", "E", "F", "G")
-  defind    <- "G"
-  
-  
-  ratingCat <- as.numeric(factor(
-    ratingCat,
-    levels = c('A', 'B', 'C', 'D', 'E', 'F', 'G'),
-    labels = c(1, 2, 3, 4, 5, 6, 7)
-  ))
-  defind <- as.numeric(factor(
-    defind,
-    levels = c('A', 'B', 'C', 'D', 'E', 'F', 'G'),
-    labels = c(1, 2, 3, 4, 5, 6, 7)
-  ))
-  
-  method    = "cohort"
-  snapshots = 1
-  interval  = 1
-  hiddenlayers = c(1)
-  activation = "logistic"
-  stepMax = 1e9                #increase to make sure the DNN converges
-  calibration = "FALSE"
-  
-  ann_TM <-
-    transForecast_ann(
-      data,
-      histData,
-      predData_ann2,
-      startDate,
-      endDate,
-      method,
-      interval,
-      snapshots,
-      defind,
-      depVar,
-      indVars,
-      ratingCat,
-      pct,
-      hiddenlayers,
-      activation,
-      stepMax,
-      calibration
-    )
-  print(ann_TM)
-  
-}
-}
+for (i in c(24,25,26)) {
+ tic()
+ data <- data
+ 
+ histData <- histData.normz
 
+ predData_ann2 <- predData_ann_Baseline
+ predData_ann2 <- subset(
+   predData_ann2,
+   X == i,
+   select = c(Market.Volatility.Index..Level..normz
+
+   )
+ )
+ 
+ indVars   = c("Market.Volatility.Index..Level..normz"
+
+ )
+ 
+ 
+ startDate = "1991-08-16"
+ endDate   = "2007-08-16"
+ 
+ 
+ depVar <- c("end_rating")
+ 
+ pct <- 1
+ wgt <-  "mCount"
+ ratingCat <- c("A", "B", "C", "D", "E", "F", "G")
+ defind    <- "G"
+ 
+ 
+ ratingCat <- as.numeric(factor(
+   ratingCat,
+   levels = c('A', 'B', 'C', 'D', 'E', 'F', 'G'),
+   labels = c(1, 2, 3, 4, 5, 6, 7)
+ ))
+ 
+ defind <- as.numeric(factor(
+   defind,
+   levels = c('A', 'B', 'C', 'D', 'E', 'F', 'G'),
+   labels = c(1, 2, 3, 4, 5, 6, 7)
+ ))
+ 
+ method    = "cohort"
+ snapshots = 1
+ interval  = 1
+ hiddenlayers = c(1)
+ activation = "logistic"
+ stepMax = 1e9                #increase to make sure the DNN converges
+ calibration = "FALSE"
+ rept = 1
+ 
+ ann_TM <-
+   transForecast_ann(
+     data,
+     histData,
+     predData_ann2,
+     startDate,
+     endDate,
+     method,
+     interval,
+     snapshots,
+     defind,
+     depVar,
+     indVars,
+     ratingCat,
+     pct,
+     hiddenlayers,
+     activation,
+     stepMax,
+     rept,
+     calibration
+   )
+ print(ann_TM)
+ 
+ toc()
+}
+}
 }
 \author{
 Abdoulaye (Ab) N'Diaye

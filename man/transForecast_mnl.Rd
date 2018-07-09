@@ -62,34 +62,36 @@ library(Matrix)
 
 
 
-for (i in c(24, 25, 26, 27)) {
+for (i in c(24, 25, 26)) {
   data <- data
+  
+  attach(data)
+  data2 <- data[order(ID, Date),] 
+  detach(data)
+  
+  data <- data2
+  rm(data2)
+  
   
   histData <- histData
   
   
-  predData_mnl2 <- predData_mnl
+  predData_mnl2 <- predData_mnl_Baseline
   predData_mnl2 <- subset(
     predData_mnl,
     X == i,
-    select = c(
-      X3.month.Treasury.rate.Lag.Q4,
-      Unemployment.....YoY.RelChng.Lag.Q2,
-      Industrial.Production,
-      Prime.rate.YoY.RelChng,
-      D_B,
-      D_C,
-      D_D,
-      D_E,
-      D_F,
-      D_G
+    select = c(Market.Volatility.Index..Level.,
+               D_B,
+               D_C,
+               D_D,
+               D_E,
+               D_F,
+               D_G
     )
   )
-  indVars   = c(
-    "X3.month.Treasury.rate.Lag.Q4",
-    "Unemployment.....YoY.RelChng.Lag.Q2",
-    "Industrial.Production",
-    "Prime.rate.YoY.RelChng"
+  
+  indVars   = c("Market.Volatility.Index..Level."
+
   )
   
   
@@ -126,11 +128,10 @@ for (i in c(24, 25, 26, 27)) {
   output <- transForecast_mnl_out$mnl_Predict
   print(output)
   
- }
- 
 }
 
-
+}
+  
 }
 \author{
 Abdoulaye (Ab) N'Diaye

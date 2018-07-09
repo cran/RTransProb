@@ -33,26 +33,23 @@
 #' library(Matrix)
 #' 
 #' 
-#' for (i in c(24, 25, 26, 27)) {
+#' for (i in c(24, 25, 26)) {
 #'   data <- data
 #'   
 #'   histData <- histData.normz
 #'   
 #'   
-#'   predData_lda2 <- predData_lda
+#'   predData_lda2 <- predData_lda_Baseline
 #'   predData_lda2 <- subset(
 #'     predData_lda2,
 #'     X == i,
-#'     select = c(
-#'       X3.month.Treasury.rate.normz.Lag.Q4,
-#'       Unemployment.....normz.YoY.AbsChng.Lag.Q2,
-#'       GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2
+#'     select = c(Market.Volatility.Index..Level..normz
+#' 
 #'     )
 #'   )
-#'   indVars   = c(
-#'     "X3.month.Treasury.rate.normz.Lag.Q4",
-#'     "Unemployment.....normz.YoY.AbsChng.Lag.Q2",
-#'     "GDP.Level..Bil...2009..normz.QoQ.AbsChng.Lag.Q2"
+#'   
+#'   indVars   = c("Market.Volatility.Index..Level..normz"
+#' 
 #'   )
 #'   
 #'   
@@ -91,9 +88,7 @@
 #'   
 #' }
 #' 
-#'}
-
-
+#' }
 
 transForecast_lda <-
   function(data,

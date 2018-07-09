@@ -333,7 +333,7 @@ TransitionProb <-
       numericalRating = data$Num_Ratings
       labels2 = sort(as.character(unique(data$Rating)))
       
-      RatingsCat = length(sort(as.character(unique(data$Rating))))
+      RatingsCat = length(sort(as.character(unique(droplevels(data$Rating)))))
       
       numDate = POSIXTomatlab(as.POSIXlt(as.Date(data$Date, format = "%m/%d/%Y")))
       #Convert dates to POSIXITlt date format and then consequently to Matlab datenum dates

@@ -572,6 +572,7 @@ forecast_svm <-
         count <- count + 1
       }
       
+      if (tuning == 'FALSE') {      
       
       #if the dependent variable is of one type skip running svm function so it  will not 'trip-up'
       if (length(unique(train.data[, 1])) > 1) {
@@ -622,13 +623,15 @@ forecast_svm <-
         
       }
       #---------------------------------------------------------------------------------------------
-      
+        
+      } else { 
       
       #-------------------------SVM USing Tuning----------------------------------------------------
-      if (tuning == 'TRUE') {
+      #if (tuning == 'TRUE') {
         ## hyperparameter optimizations
         
         # run grid search
+        formula.init <- stats::as.formula(formula.init)
         tuning.results <- e1071::tune(
           e1071::svm,
           formula.init,
@@ -643,7 +646,8 @@ forecast_svm <-
         
         # get best model and evaluate predictions
         svm.model.best = tuning.results$best.model
-        
+        #print("Best SVM model:")
+        #print(svm.model.best)
         
         ## predict and evaluate results (using real forecasting data)
         svm.predictions.best <-
@@ -961,7 +965,7 @@ forecast_ann <-
         utils::head(trainData.df, -1)        #return all rows except the last row (which contains the forecast data)
       indexes <-
         sample(1:nrow(trainData.df), size = pct * nrow(trainData.df))
-      train.data <- trainData.df[sort(indexes), ]
+      train.data <- as.data.frame(trainData.df[sort(indexes), ])
       
       test.data <- trainData.df[-indexes, ]
       test.feature.vars <-
@@ -981,15 +985,21 @@ forecast_ann <-
       train.data.keep <- train.data
       
       
-      ## Get original names (exclude dependent Variable name)
-      origNames <- names(train.data[, -1])
-      
       ## Create "one hot" vector
       hotVec <- nnet::class.ind(as.factor(train.data[, 1]))
       hotVec <- data.frame(hotVec)
       
+      ## Get original names (exclude dependent Variable name)
+      origNames <- colnames(train.data)[-1]
+      
       # Create complete table with "one hot" vector and independent variables
-      train.data <- cbind(hotVec, train.data[,-1])
+      train.data <- cbind(hotVec, train.data[origNames])
+      
+      
+      
+
+      # 
+      # names(train.data) <-  origNames
       
       
       
