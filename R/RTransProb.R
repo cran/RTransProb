@@ -7,6 +7,15 @@
 #' @docType package
 NULL
 
+#' dataTM
+#'
+# Time series loan data for blog
+#'
+#' @name dataTM
+#' @docType package
+NULL
+
+
 #' histData
 #'
 # Time series data of independent variables.

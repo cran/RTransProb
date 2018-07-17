@@ -2,17 +2,15 @@
 #'
 #' @description This function is used to estimate transition probabilities and counts given historical credit data (a.k.a., credit migration data).
 #'
-#' @usage TransitionProb(data, startDate, endDate, method, snapshots, interval)
+#' @usage TransitionProb(dataTM, startDate, endDate, method, snapshots, interval)
 #'
-#' @param data              a table containing historical credit ratings data (i.e., credit migration data). A dataframe of size \emph{nRecords} x 3 where each row contains an ID (column 1), a date (column 2), and a credit rating (column 3); The credit rating is the rating assigned to the corresponding ID on the corresponding date.
+#' @param dataTM              a table containing historical credit ratings data (i.e., credit migration data). A dataframe of size \emph{nRecords} x 3 where each row contains an ID (column 1), a date (column 2), and a credit rating (column 3); The credit rating is the rating assigned to the corresponding ID on the corresponding date.
 #' @param startDate             start date of the estimation time window, in string or numeric format. The default start date is the earliest date in 'data'.
 #' @param endDate             end date of the estimation time window, in string or numeric format. The default end date is the latest date in 'data'. The end date cannot be a date before the start date.
 #' @param method            estimation algorithm, in string format. Valid values are 'duration'  or 'cohort'.
 #' @param snapshots  integer indicating the number of credit-rating snapshots per year to be considered for the estimation. Valid values are 1, 4, or 12. The default value is 1, \emph{i.e., one snapshot per year}. This parameter is only used in the 'cohort' algorithm.
 #' @param interval  the length of the transition interval under consideration, in years. The default value is 1, \emph{i.e., 1-year transition probabilities are estimated}.
 #'
-# @param numericalRating   a table containing mapping of the letter credit rating to a numerical value.
-# @param RatingsCat        number of rating categories.
 #'
 #' @details
 #' The two most commonly used methods to estimate credit transition matrices are the cohort (discrete time) and duration (continuous time) methods.
@@ -68,7 +66,7 @@
 #' interval <- 0
 #' startDate  <- 0
 #' endDate    <- 0
-#' Example1<-TransitionProb(data,startDate,endDate,'cohort', snapshots, interval)
+#' Example1<-TransitionProb(dataTM,startDate,endDate,'cohort', snapshots, interval)
 #'
 #' 
 #' #Example 2:
@@ -78,7 +76,7 @@
 #' interval <- 0
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2002-01-01"
-#' Example2<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
+#' Example2<-TransitionProb(dataTM,startDate, endDate,'duration', snapshots, interval)
 #' 
 #'
 #' #Example 3:
@@ -88,7 +86,7 @@
 #' interval <- 0
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2005-01-01"
-#' Example3<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+#' Example3<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 #'
 #'
 #' #Example 4:
@@ -99,7 +97,7 @@
 #' interval <- 1    #This gives a 1 year transition matrix
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2005-01-01"
-#' Example4<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+#' Example4<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 #'
 #'
 #' #Example 5:
@@ -110,7 +108,7 @@
 #' interval <- 2     #This gives a 2 years transition matrix
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2005-01-01"
-#' Example5<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+#' Example5<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 #'
 #' 
 #' #Example 6:
@@ -121,7 +119,7 @@
 #' interval <- 1    #This gives a 1 year transition matrix
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2002-01-01"
-#' Example6<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
+#' Example6<-TransitionProb(dataTM,startDate, endDate,'duration', snapshots, interval)
 #' 
 #'
 #' #Example 7:
@@ -132,7 +130,7 @@
 #' interval <- 1    #This gives a 1 year transition matrix
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2005-01-01"
-#' Example7<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+#' Example7<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 #'
 #'
 #' #Example 8:
@@ -143,18 +141,18 @@
 #' interval <- 1    #This gives a 1 year transition matrix
 #' startDate  <- "2000-01-01"
 #' endDate    <- "2005-01-01"
-#' Example8<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+#' Example8<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 #' }
 #'
 TransitionProb <-
-  function(data,
+  function(dataTM,
            startDate,
            endDate,
            method,
            snapshots,
            interval) {
     options(warn = -1)
-    data <- fixDate(data)
+    data <- fixDate(dataTM)
     data_names <- names(data)
     
     # if(!isTRUE('ID' %in% data_names)){

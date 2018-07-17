@@ -4,10 +4,10 @@
 \alias{TransitionProb}
 \title{Estimation of credit transition probabilities}
 \usage{
-TransitionProb(data, startDate, endDate, method, snapshots, interval)
+TransitionProb(dataTM, startDate, endDate, method, snapshots, interval)
 }
 \arguments{
-\item{data}{a table containing historical credit ratings data (i.e., credit migration data). A dataframe of size \emph{nRecords} x 3 where each row contains an ID (column 1), a date (column 2), and a credit rating (column 3); The credit rating is the rating assigned to the corresponding ID on the corresponding date.}
+\item{dataTM}{a table containing historical credit ratings data (i.e., credit migration data). A dataframe of size \emph{nRecords} x 3 where each row contains an ID (column 1), a date (column 2), and a credit rating (column 3); The credit rating is the rating assigned to the corresponding ID on the corresponding date.}
 
 \item{startDate}{start date of the estimation time window, in string or numeric format. The default start date is the earliest date in 'data'.}
 
@@ -65,7 +65,7 @@ snapshots <- 0
 interval <- 0
 startDate  <- 0
 endDate    <- 0
-Example1<-TransitionProb(data,startDate,endDate,'cohort', snapshots, interval)
+Example1<-TransitionProb(dataTM,startDate,endDate,'cohort', snapshots, interval)
 
 
 #Example 2:
@@ -75,7 +75,7 @@ snapshots <- 0
 interval <- 0
 startDate  <- "2000-01-01"
 endDate    <- "2002-01-01"
-Example2<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
+Example2<-TransitionProb(dataTM,startDate, endDate,'duration', snapshots, interval)
 
 
 #Example 3:
@@ -85,7 +85,7 @@ snapshots <- 0
 interval <- 0
 startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
-Example3<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+Example3<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 
 
 #Example 4:
@@ -96,7 +96,7 @@ snapshots <- 4    #This uses quarterly transition matrices
 interval <- 1    #This gives a 1 year transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
-Example4<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+Example4<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 
 
 #Example 5:
@@ -107,7 +107,7 @@ snapshots <- 4     #This uses quarterly transition matrices
 interval <- 2     #This gives a 2 years transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
-Example5<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+Example5<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 
 
 #Example 6:
@@ -118,7 +118,7 @@ snapshots <- 4    #This uses quarterly transition matrices
 interval <- 1    #This gives a 1 year transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2002-01-01"
-Example6<-TransitionProb(data,startDate, endDate,'duration', snapshots, interval)
+Example6<-TransitionProb(dataTM,startDate, endDate,'duration', snapshots, interval)
 
 
 #Example 7:
@@ -129,7 +129,7 @@ snapshots <- 12    #This uses monthly transition matrices
 interval <- 1    #This gives a 1 year transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
-Example7<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+Example7<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 
 
 #Example 8:
@@ -140,7 +140,7 @@ snapshots <- 1    #This uses annual transition matrices
 interval <- 1    #This gives a 1 year transition matrix
 startDate  <- "2000-01-01"
 endDate    <- "2005-01-01"
-Example8<-TransitionProb(data,startDate, endDate,'cohort', snapshots, interval)
+Example8<-TransitionProb(dataTM,startDate, endDate,'cohort', snapshots, interval)
 }
 
 }

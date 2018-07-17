@@ -1,10 +1,10 @@
-9d594790657bc31877d624830328ac9e *DESCRIPTION
+15ba8c51900e786f8d2b570a4d4067c7 *DESCRIPTION
 8d5ab25bac54dd35f60e43725677e62e *NAMESPACE
 cb5d17329f2bb7ae6964fee80d18272d *R/POSIXTomatlab.R
 b22b2e1d264f98f1beae3dded4daab72 *R/RTransProb-internal.R
-b4d9f8b5ed244ff9dfb314d6912e599a *R/RTransProb.R
+2c2fdf3ebbf64056d13febffc117750b *R/RTransProb.R
 b1bbc06a3ffa1b3b51b3c15bd8b49745 *R/RcppExports.R
-bdeeebb080027588ffca9eed79b803af *R/TransitionProb.R
+0810c562984285e417d31045e5d97cfa *R/TransitionProb.R
 f1527c1833074b21fa514fc3c7c76e2b *R/VecOfTransData.R
 847d9c7c2f7d8af8e08bc6c1e5ec8fdf *R/cfdates.R
 52cf2c9fb36ce2a8d4123763633f4cbc *R/cohort.CI.R
@@ -24,6 +24,7 @@ dd3b851ce78c2dc4339a3fcf8c2ec79e *R/transForecast_mnl.R
 897f70e965e34c07475e06126003451b *R/transForecast_svm.R
 186457dd65e492116481dafb932a5862 *R/transitionprobbytotals.R
 0b698766df6be66093385c9b5e8e4591 *data/data.RData
+11484d179df9afaf9b5e6a58e16d0125 *data/dataTM.RData
 911802b4fd25f18ab10f6c1b4c596b83 *data/histData.RData
 5b66702c6b3ff94de9e8453165cf2323 *data/histData.normz.RData
 b0f9d04fe516daa8bb78d303d2718dbc *data/predData_ann_Adverse.RData
@@ -41,12 +42,13 @@ d9263312597dcb834f22d74aa2429cd1 *data/predData_mnl_NoVariables.RData
 62f022d55a48f76605379bfdf48d9874 *data/predData_svm_SeverelyAdverse.RData
 5b503b9ca916f908e9aeff52e9c4a1f7 *man/POSIXTomatlab.Rd
 2df959ef9e578bd83c6308641515a1cb *man/RTransProb-Internal.Rd
-5fb0d4d9c7ac0b8e7fbe56c4da0a1055 *man/TransitionProb.Rd
+25286a89855b7c65d701e584028a143e *man/TransitionProb.Rd
 7ebe63510ea35951ede7652babfa7eed *man/VecOfTransData.Rd
 33e8b689c81245562929d1851d5128cc *man/cfdates.Rd
 7a7f4aedc24d0a4a5156fe5253b39709 *man/cohort.CI.Rd
 c5a6e041111aa5e591b1e826a0d96759 *man/cohort.TTC.Rd
 26801bda7434f55ea9886944a54d0685 *man/data.Rd
+9789466f6ca468baf581c7913f4abfc1 *man/dataTM.Rd
 95fed40047009bd2ccc5e2990e23062a *man/duration.CI.Rd
 97d925480cee3a178f72574cc3616a08 *man/duration.TTC.Rd
 11ff26cfa6734f7427ab4c8bc0c7261d *man/expandTransData.Rd
